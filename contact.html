@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | THE BOOTH TREND</title>
+    <link rel="icon" type="image/png" href="./assets/logo_blue_1.png">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#A259FF',
+                            dark: '#8030E0',
+                            light: '#C490FF'
+                        },
+                        dark: '#050505',
+                        surface: '#121212'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body {
+            background-color: var(--dark);
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        .hero-glow {
+            background: radial-gradient(circle at top right, rgba(162, 89, 255, 0.15) 0%, rgba(0,0,0,0) 60%);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #FFF 0%, #A259FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-dark text-white antialiased overflow-x-hidden">
+
+  <!-- Navigation -->
+    <nav class="fixed w-full z-50 top-0 left-0 border-b border-white/5 bg-dark/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 sm:h-20 flex items-center justify-between gap-2">
+            
+            <a href="index.html" class="flex items-center gap-2 font-black text-sm sm:text-xl tracking-tighter hover:opacity-80 transition-opacity shrink-0">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-brand rounded-lg flex items-center justify-center text-white shrink-0">
+                    <i data-lucide="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                </div>
+                <span>THE BOOTH TREND</span>
+            </a>
+            
+            <!-- Desktop Links -->
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+                <a href="index.html" class="text-white transition-colors">Home</a>
+                <a href="index.html#features" class="hover:text-white transition-colors">Features</a>
+                <a href="index.html#how-it-works" class="hover:text-white transition-colors">How it Works</a>
+                <a href="contact.html" class="hover:text-white transition-colors">Contact</a>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4">
+                <a href="brand_booth.html" class="bg-white text-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-brand hover:text-white transition-all duration-300 shadow-lg shrink-0 whitespace-nowrap">
+                    Launch Demo
+                </a>
+                
+                <!-- Mobile Hamburger Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-400 hover:text-white transition-colors focus:outline-none">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-dark/95 backdrop-blur-xl border-b border-white/10 absolute w-full left-0 top-full">
+            <div class="flex flex-col px-6 py-6 space-y-6 text-center">
+                <a href="index.html" class="text-gray-300 hover:text-white font-semibold text-lg transition-colors mobile-link">Home</a>
+                <a href="index.html#features" class="text-gray-300 hover:text-white font-semibold text-lg transition-colors mobile-link">Features</a>
+                <a href="index.html#how-it-works" class="text-gray-300 hover:text-white font-semibold text-lg transition-colors mobile-link">How it Works</a>
+                <a href="contact.html" class="text-gray-300 hover:text-white font-semibold text-lg transition-colors mobile-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <!-- Contact Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 min-h-screen flex items-center overflow-hidden">
+        <div class="absolute inset-0 hero-glow z-0 pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-6 relative z-10 w-full">
+            
+            <!-- Header -->
+            <div class="text-center mb-16">
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
+                    Get in <span class="text-gradient">Touch.</span>
+                </h1>
+                <p class="text-brand text-lg font-semibold tracking-wide uppercase">Capture the trend</p>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">Have a question about our virtual photo booths or want to set up a custom campaign? We'd love to hear from you.</p>
+            </div>
+
+            <!-- Contact Cards Grid -->
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                
+                <!-- Address -->
+                <div class="glass-card p-10 rounded-3xl flex flex-col items-center text-center gap-6 hover:bg-white/5 transition-all group">
+                    <div class="w-16 h-16 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <i data-lucide="map-pin" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-3">Visit Us</h3>
+                        <p class="text-gray-400 leading-relaxed">
+                            506/3a, Municipal Colony,<br>
+                            College Road,<br>
+                            Tirupur - 641602
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Phone -->
+                <div class="glass-card p-10 rounded-3xl flex flex-col items-center text-center gap-6 hover:bg-white/5 transition-all group">
+                    <div class="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <i data-lucide="phone" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-3">Call Us</h3>
+                        <p class="text-gray-400 leading-relaxed mb-1">Anytime</p>
+                        <a href="tel:+919363654405" class="text-white font-semibold hover:text-brand transition-colors">
+                            +91-9363654405
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="glass-card p-10 rounded-3xl flex flex-col items-center text-center gap-6 hover:bg-white/5 transition-all group">
+                    <div class="w-16 h-16 rounded-2xl bg-pink-500/10 text-pink-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <i data-lucide="mail" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-3">Email Us</h3>
+                        <p class="text-gray-400 leading-relaxed mb-1">We'll get back to you.</p>
+                        <a href="mailto:theboothtrend@gmail.com" class="text-white font-semibold hover:text-brand transition-colors break-all">
+                            theboothtrend@gmail.com
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-12 bg-dark text-gray-500 text-sm">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2 font-bold text-white">
+                <i data-lucide="camera" class="w-4 h-4 text-brand"></i>
+                THE BOOTH TREND
+            </div>
+            
+            <div class="flex gap-6">
+                <a href="index.html" class="hover:text-white transition-colors">Home</a>
+                <a href="./privacy.html" class="hover:text-white transition-colors">Privacy</a>
+                <a href="./terms.html" class="hover:text-white transition-colors">Terms</a>
+                <a href="./contact.html" class="hover:text-white transition-colors text-white">Contact</a>
+            </div>
+            
+            <div>
+                &copy; 2026 The Booth Trend. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Mobile Menu Toggle Logic
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        if (btn && menu) {
+            // Toggle menu on button click
+            btn.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+            });
+
+            // Close menu when a link is clicked
+            mobileLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                });
+            });
+        }
+    </script>
+</body>
+</html>

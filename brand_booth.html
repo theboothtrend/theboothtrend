@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>THE BOOTH TREND</title>
+    
+    <!-- Website Icon -->
+    <link rel="icon" type="image/png" href="./assets/logo_blue_1.png">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary: #A259FF;
+            --dark: black;
+            --light: #f1f2f6;
+            --glass: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark);
+            color: var(--light);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100dvh; 
+            touch-action: none; /* Prevent scroll on mobile */
+        }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--glass);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Back Button */
+        #back-button {
+            position: absolute;
+            top: max(20px, env(safe-area-inset-top)); /* Respects mobile notches */
+            left: 20px;
+            width: 44px;
+            height: 44px;
+            background: #a259ff; /* Brand color */
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 160;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4); /* Brand colored glow */
+        }
+        
+        #back-button:hover {
+            background: #8030E0; /* Darker brand color on hover */
+            transform: scale(1.05);
+        }
+        
+        #back-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Main Booth Area */
+        #booth-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        #input-video { display: none; }
+
+        #output-canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* UI Controls Overlay */
+        #controls {
+            position: absolute;
+            bottom: 20px; /* Moved down for mobile */
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 150; /* Increased to ensure buttons are clickable above flash/overlays */
+            pointer-events: none; /* Let clicks pass through around buttons */
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Move button up on Desktop */
+        @media (min-width: 768px) {
+            #controls {
+                bottom: 165px;
+            }
+        }
+
+        .btn-large {
+            width: 80px;
+            height: 80px;
+            background: black;
+            border: 4px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+            pointer-events: auto; /* Enable clicks */
+        }
+        
+        .btn-large:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-large i {
+            color: var(--primary); 
+            fill: var(--primary);
+        }
+
+        /* Countdown Overlay */
+        #countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 150px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+            z-index: 50;
+            display: none;
+            pointer-events: none;
+        }
+
+        /* Flash Animation */
+        #flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+            transition: opacity 0.1s;
+        }
+
+        /* Result Modal */
+        #result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        #result-modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #result-img {
+            max-width: 90%;
+            max-height: 65vh;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+
+        .modal-actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: white;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .action-btn.secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <p>Loading Face Tracking...</p>
+    </div>
+
+    <!-- Main Booth -->
+    <div id="booth-container">
+        
+        <!-- Back Button -->
+        <a href="index.html" id="back-button">
+            <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
+        </a>
+
+        <video id="input-video" class="input_video" playsinline></video>
+        <canvas id="output-canvas"></canvas>
+        <div id="countdown"></div>
+        <div id="flash"></div>
+
+        <!-- Controls (Only Capture Button) -->
+        <div id="controls">
+            <!-- Capture Button -->
+            <button class="btn-large" id="btn-capture" onclick="startCountdown()">
+                <i data-lucide="camera" style="width: 32px; height: 32px;"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal">
+        <img id="result-img" src="" alt="Captured Photo">
+        <div class="modal-actions">
+            <button class="action-btn secondary" onclick="closeModal()">
+                <i data-lucide="trash-2"></i> Discard
+            </button>
+            <button class="action-btn secondary" onclick="sharePhoto()">
+                <i data-lucide="share-2"></i> Share
+            </button>
+            <button class="action-btn" onclick="downloadPhoto()">
+                <i data-lucide="download"></i> Save
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // DOM Elements
+        const videoElement = document.getElementById('input-video');
+        const canvasElement = document.getElementById('output-canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const loader = document.getElementById('loader');
+        const countdownEl = document.getElementById('countdown');
+        const flashEl = document.getElementById('flash');
+        const resultModal = document.getElementById('result-modal');
+        const resultImg = document.getElementById('result-img');
+
+        // --- BRAND CONFIGURATION ---
+        // Change these variables to set the default frame/effect for your brand
+        // Effects: 'none', 'sparkles', 'clown', 'cyber', 'sunglasses', 'brand-text'
+        // Frames: 'none', 'polaroid', 'neon', 'film'
+        let activeEffect = 'none'; 
+        let activeFrame = 'polaroid'; // Default active frame
+        
+        let isCapturing = false;
+        let particles = []; // For sparkle effect
+        // Global crop info updated every frame
+        let cropInfo = { x: 0, y: 0, w: 0, h: 0 }; 
+        const TARGET_ASPECT = 4 / 5; // Standard Instagram Portrait Ratio
+
+        // --- FRAME IMAGES CONFIGURATION ---
+        // Replace these URLs with your own PNG files.
+        // Ensure they are 4:5 aspect ratio (e.g. 1080x1350) and have transparent backgrounds.
+        const FRAME_ASSETS = {
+            polaroid: "assets/Photo_Frame.png",
+            neon: "https://placehold.co/1080x1350/png?text=Neon+Frame+(Transparent)",
+            film: "https://placehold.co/1080x1350/png?text=Film+Frame+(Transparent)"
+        };
+
+        // Preload Frame Images
+        const frameImages = {};
+        Object.keys(FRAME_ASSETS).forEach(key => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = FRAME_ASSETS[key];
+            frameImages[key] = img;
+        });
+
+        // --- Render Loop ---
+        
+        function onResults(results) {
+            // Resize Canvas to match video dimensions if changed
+            if (canvasElement.width !== videoElement.videoWidth || canvasElement.height !== videoElement.videoHeight) {
+                canvasElement.width = videoElement.videoWidth;
+                canvasElement.height = videoElement.videoHeight;
+            }
+
+            const w = canvasElement.width;
+            const h = canvasElement.height;
+            const screenAspect = w / h;
+
+            // Calculate Crop Dimensions (Center Weighted)
+            if (screenAspect > TARGET_ASPECT) {
+                cropInfo.h = h;
+                cropInfo.w = h * TARGET_ASPECT;
+                cropInfo.x = (w - cropInfo.w) / 2;
+                cropInfo.y = 0;
+            } else {
+                cropInfo.w = w;
+                cropInfo.h = w / TARGET_ASPECT;
+                cropInfo.x = 0;
+                cropInfo.y = (h - cropInfo.h) / 2;
+            }
+
+            // --- 1. Draw Mirrored Video & Effects ---
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, w, h);
+            
+            // Mirror
+            canvasCtx.translate(w, 0);
+            canvasCtx.scale(-1, 1);
+
+            // Draw Video
+            canvasCtx.drawImage(results.image, 0, 0, w, h);
+            
+            // Draw Face Effects (mirrored)
+            if (results.multiFaceLandmarks) {
+                for (const landmarks of results.multiFaceLandmarks) {
+                    applyEffect(landmarks);
+                }
+            }
+
+            canvasCtx.restore(); // Restore context to normal orientation
+            
+            // --- 2. Draw Guides (Overlay outside crop area) ---
+            drawCropOverlay(w, h);
+
+            // --- 3. Draw PNG Frame (Normal Orientation, inside Crop) ---
+            applyFrame(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
+
+            // Hide loader once we have first frame
+            if (loader.style.opacity !== '0') {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            }
+        }
+
+        // --- Drawing Helpers ---
+
+        function drawCropOverlay(w, h) {
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // Dimming layer
+            
+            if (cropInfo.y > 0) canvasCtx.fillRect(0, 0, w, cropInfo.y);
+            if (cropInfo.y + cropInfo.h < h) canvasCtx.fillRect(0, cropInfo.y + cropInfo.h, w, h - (cropInfo.y + cropInfo.h));
+            if (cropInfo.x > 0) canvasCtx.fillRect(0, cropInfo.y, cropInfo.x, cropInfo.h);
+            if (cropInfo.x + cropInfo.w < w) canvasCtx.fillRect(cropInfo.x + cropInfo.w, cropInfo.y, w - (cropInfo.x + cropInfo.w), cropInfo.h);
+            
+            canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            canvasCtx.lineWidth = 1;
+            canvasCtx.strokeRect(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
+        }
+
+        // --- Effects Logic ---
+
+        function applyEffect(landmarks) {
+            const width = canvasElement.width;
+            const height = canvasElement.height;
+
+            if (activeEffect === 'brand-text') {
+                // Indices for cheeks
+                const leftEye = landmarks[33];
+                const rightEye = landmarks[263];
+                const cheekL = landmarks[50]; // User's Left (Screen Right in Mirror)
+                const cheekR = landmarks[280]; // User's Right (Screen Left in Mirror)
+
+                // Calculate Face Rotation
+                const dx = rightEye.x - leftEye.x;
+                const dy = rightEye.y - leftEye.y;
+                const angle = Math.atan2(dy, dx);
+                
+                // Scale text based on face size
+                const faceWidth = Math.sqrt(dx*dx + dy*dy) * width;
+                const fontSize = faceWidth * 0.15; 
+
+                canvasCtx.font = `900 ${fontSize}px sans-serif`;
+                canvasCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                canvasCtx.textAlign = "center";
+                canvasCtx.textBaseline = "middle";
+                
+                // --- Draw "THE BOOTH" on LEFT Cheek (Screen Left, Landmark 50) ---
+                canvasCtx.save();
+                canvasCtx.translate(cheekL.x * width, cheekL.y * height);
+                canvasCtx.rotate(angle);
+                canvasCtx.scale(-1, 1); // Flip Text Back so it's readable
+                canvasCtx.shadowColor = "rgba(0,0,0,0.5)";
+                canvasCtx.shadowBlur = 4;
+                canvasCtx.fillText("TREND", 0, 0);
+                canvasCtx.restore();
+
+                // --- Draw "TREND" on RIGHT Cheek (Screen Right, Landmark 280) ---
+                canvasCtx.save();
+                canvasCtx.translate(cheekR.x * width, cheekR.y * height);
+                canvasCtx.rotate(angle);
+                canvasCtx.scale(-1, 1); // Flip Text Back so it's readable
+                canvasCtx.shadowColor = "rgba(0,0,0,0.5)";
+                canvasCtx.shadowBlur = 4;
+                canvasCtx.fillText("THE BOOTH", 0, 0);
+                canvasCtx.restore();
+            } 
+            else if (activeEffect === 'mesh') {
+                drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION, {color: '#C0C0C070', lineWidth: 1});
+            } 
+            else if (activeEffect === 'clown') {
+                const noseTip = landmarks[1];
+                canvasCtx.beginPath();
+                canvasCtx.arc(noseTip.x * width, noseTip.y * height, width * 0.05, 0, 2 * Math.PI);
+                canvasCtx.fillStyle = 'red';
+                canvasCtx.fill();
+                
+                const leftCheek = landmarks[234];
+                const rightCheek = landmarks[454];
+                canvasCtx.beginPath();
+                canvasCtx.arc(leftCheek.x * width, leftCheek.y * height, width * 0.03, 0, 2 * Math.PI);
+                canvasCtx.arc(rightCheek.x * width, rightCheek.y * height, width * 0.03, 0, 2 * Math.PI);
+                canvasCtx.fillStyle = 'rgba(255, 100, 100, 0.5)';
+                canvasCtx.fill();
+            }
+            else if (activeEffect === 'cyber') {
+                drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
+                drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
+                drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2});
+                
+                const time = Date.now() / 1000;
+                const y = (time % 1) * height;
+                canvasCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+                canvasCtx.lineWidth = 2;
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(0, y);
+                canvasCtx.lineTo(width, y);
+                canvasCtx.stroke();
+            }
+            else if (activeEffect === 'sunglasses') {
+                const leftEye = landmarks[33];
+                const rightEye = landmarks[263];
+                const center = landmarks[6];
+
+                const eyeDistance = Math.sqrt(
+                    Math.pow((rightEye.x - leftEye.x) * width, 2) + 
+                    Math.pow((rightEye.y - leftEye.y) * height, 2)
+                );
+                
+                const glassesWidth = eyeDistance * 2.2;
+                const glassesHeight = glassesWidth * 0.4;
+                const angle = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
+
+                canvasCtx.save();
+                canvasCtx.translate(center.x * width, center.y * height);
+                canvasCtx.rotate(angle);
+                
+                canvasCtx.fillStyle = '#111';
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(-glassesWidth/2, -glassesHeight/2, glassesWidth/2 - 5, glassesHeight, 10);
+                canvasCtx.fill();
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(5, -glassesHeight/2, glassesWidth/2 - 5, glassesHeight, 10);
+                canvasCtx.fill();
+                canvasCtx.fillStyle = '#333';
+                canvasCtx.fillRect(-5, -glassesHeight/4, 10, 5);
+                
+                canvasCtx.restore();
+            }
+            else if (activeEffect === 'sparkles') {
+                if(Math.random() > 0.7) {
+                    particles.push({
+                        x: (landmarks[10].x * width) + (Math.random() - 0.5) * width * 0.5,
+                        y: (landmarks[10].y * height) + (Math.random() - 0.5) * height * 0.5,
+                        life: 1.0,
+                        size: Math.random() * 5 + 2
+                    });
+                }
+                
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+                    p.y -= 2;
+                    p.life -= 0.02;
+                    if (p.life <= 0) {
+                        particles.splice(i, 1);
+                        continue;
+                    }
+                    canvasCtx.fillStyle = `rgba(255, 215, 0, ${p.life})`;
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    canvasCtx.fill();
+                }
+            }
+        }
+
+        // --- Frame Logic ---
+
+        function applyFrame(x, y, w, h) {
+            if (activeFrame === 'none') return;
+
+            const img = frameImages[activeFrame];
+            if (img && img.complete && img.naturalHeight !== 0) {
+                // Draw the PNG scaling it to fit exactly within the crop area (4:5)
+                canvasCtx.drawImage(img, x, y, w, h);
+            }
+        }
+
+        // --- Capture Workflow ---
+
+        function startCountdown() {
+            if (isCapturing) return;
+            isCapturing = true;
+            
+            let count = 3;
+            countdownEl.style.display = 'block';
+            countdownEl.innerText = count;
+
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownEl.innerText = count;
+                } else {
+                    clearInterval(timer);
+                    countdownEl.style.display = 'none';
+                    takePhoto();
+                }
+            }, 1000);
+        }
+
+        function takePhoto() {
+            flashEl.style.opacity = '1';
+            setTimeout(() => flashEl.style.opacity = '0', 100);
+            
+            try {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = cropInfo.w;
+                tempCanvas.height = cropInfo.h;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                tempCtx.drawImage(
+                    canvasElement, 
+                    cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
+                    0, 0, cropInfo.w, cropInfo.h 
+                );
+
+                const dataURL = tempCanvas.toDataURL('image/png');
+                resultImg.src = dataURL;
+                resultModal.classList.add('open');
+            } catch (err) {
+                console.error(err);
+                alert("Capture error. If using custom frames, ensure CORS is enabled on the image host.");
+            }
+            isCapturing = false;
+        }
+
+        function downloadPhoto() {
+            const link = document.createElement('a');
+            link.download = `photobooth-${Date.now()}.png`;
+            link.href = resultImg.src;
+            link.click();
+            closeModal();
+        }
+
+        async function sharePhoto() {
+            if (!navigator.canShare) {
+                alert("Sharing is not fully supported on this device/browser.");
+                return;
+            }
+
+            try {
+                const dataUrl = resultImg.src;
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], `photo-booth-${Date.now()}.png`, { type: blob.type });
+
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Virtual Photo Booth',
+                        text: 'Booth Trend, Capture The Trend!',
+                        files: [file]
+                    });
+                } else {
+                    alert("Your browser supports sharing, but not sharing image files directly.");
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                    alert('Sharing failed. You can try saving the image instead.');
+                }
+            }
+        }
+
+        function closeModal() {
+            resultModal.classList.remove('open');
+        }
+
+        // --- MediaPipe Setup ---
+        
+        const faceMesh = new FaceMesh({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+        }});
+
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        faceMesh.onResults(onResults);
+
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await faceMesh.send({image: videoElement});
+            },
+            width: 1280,
+            height: 720
+        });
+
+        camera.start().catch(e => {
+            console.error(e);
+            loader.innerHTML = "<p>Camera access denied or error.</p>";
+        });
+
+    </script>
+</body>
+</html>
