@@ -8,20 +8,23 @@
     <!-- Website Icon -->
     <link rel="icon" type="image/png" href="./assets/logo_blue_1.png">
     
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         :root {
             --primary: #A259FF;
-            --dark: black;
-            --light: #f1f2f6;
-            --glass: rgba(255, 255, 255, 0.15);
+            --primary-hover: #8e44ef;
+            --dark: #000000;
+            --light: #ffffff;
+            --danger: #ff3b30;
+            --glass-bg: rgba(0, 0, 0, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -34,7 +37,7 @@
             display: flex;
             flex-direction: column;
             height: 100dvh; 
-            touch-action: none; /* Prevent scroll on mobile */
+            touch-action: none;
         }
 
         /* Loading Screen */
@@ -50,49 +53,61 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.5s;
+            transition: opacity 0.4s ease;
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid var(--glass);
-            border-top: 5px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(162, 89, 255, 0.2);
+            border-top: 3px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+        }
+
+        #loader p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.5px;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Back Button */
-        #back-button {
+        /* Top Bar Container */
+        .top-bar {
             position: absolute;
-            top: max(20px, env(safe-area-inset-top)); /* Respects mobile notches */
-            left: 20px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: max(20px, env(safe-area-inset-top)) 20px 20px;
+            display: flex;
+            justify-content: flex-start;
+            z-index: 160;
+            pointer-events: none;
+        }
+
+        /* Glass Back Button */
+        #back-button {
             width: 44px;
             height: 44px;
-            background: #a259ff; /* Brand color */
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            z-index: 160;
             text-decoration: none;
-            transition: all 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-            box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4); /* Brand colored glow */
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: auto;
         }
         
-        #back-button:hover {
-            background: #8030E0; /* Darker brand color on hover */
-            transform: scale(1.05);
-        }
-        
-        #back-button:active {
-            transform: scale(0.95);
+        #back-button:active { 
+            transform: scale(0.9);
+            background: rgba(0, 0, 0, 0.6);
         }
 
         /* Main Booth Area */
@@ -118,48 +133,77 @@
         /* UI Controls Overlay */
         #controls {
             position: absolute;
-            bottom: 20px; /* Moved down for mobile */
+            bottom: max(30px, env(safe-area-inset-bottom));
             left: 0;
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
-            z-index: 150; /* Increased to ensure buttons are clickable above flash/overlays */
-            pointer-events: none; /* Let clicks pass through around buttons */
-            padding-bottom: env(safe-area-inset-bottom);
+            gap: 24px;
+            z-index: 150;
+            pointer-events: none;
         }
 
-        /* Move button up on Desktop */
-        @media (min-width: 768px) {
-            #controls {
-                bottom: 165px;
-            }
-        }
-
-        .btn-large {
-            width: 80px;
-            height: 80px;
-            background: black;
-            border: 4px solid rgba(255,255,255,0.5);
+        /* Base floating button style */
+        .glass-btn {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
             border-radius: 50%;
-            color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: transform 0.1s;
-            pointer-events: auto; /* Enable clicks */
+            pointer-events: auto;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            color: white;
+        }
+
+        .glass-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* Secondary actions (Swap) */
+        .btn-small {
+            width: 48px;
+            height: 48px;
+        }
+
+        /* Main action buttons (Photo / Video) */
+        .btn-action {
+            width: 68px;
+            height: 68px;
+        }
+
+        .btn-action.photo {
+            background: rgba(255, 255, 255, 0.9);
+            border: 4px solid rgba(255, 255, 255, 0.4);
+            background-clip: padding-box;
+            color: var(--dark);
+        }
+
+        .btn-action.video {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid white;
+        }
+
+        /* Recording Animation */
+        .recording {
+            background: var(--danger) !important;
+            border-color: rgba(255, 59, 48, 0.4) !important;
+            animation: pulse 2s infinite;
         }
         
-        .btn-large:active {
-            transform: scale(0.95);
+        .recording i { 
+            color: white !important; 
+            fill: white !important; 
         }
-        
-        .btn-large i {
-            color: var(--primary); 
-            fill: var(--primary);
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 59, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
         }
 
         /* Countdown Overlay */
@@ -168,10 +212,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 150px;
-            font-weight: 900;
+            font-size: 120px;
+            font-weight: 800;
             color: white;
-            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+            text-shadow: 0 4px 24px rgba(0,0,0,0.6);
             z-index: 50;
             display: none;
             pointer-events: none;
@@ -188,7 +232,7 @@
             opacity: 0;
             pointer-events: none;
             z-index: 100;
-            transition: opacity 0.1s;
+            transition: opacity 0.1s ease-out;
         }
 
         /* Result Modal */
@@ -198,7 +242,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.85); /* Frosted background */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: 200;
             display: flex;
             flex-direction: column;
@@ -206,23 +252,31 @@
             justify-content: center;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s;
-            padding-bottom: env(safe-area-inset-bottom);
+            transition: all 0.3s ease;
+            padding: 20px;
         }
 
-        #result-modal.open {
-            opacity: 1;
-            visibility: visible;
+        #result-modal.open { 
+            opacity: 1; 
+            visibility: visible; 
         }
 
-        #result-img {
-            max-width: 90%;
+        .result-media {
+            max-width: 100%;
             max-height: 65vh;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             object-fit: contain;
+            display: none;
+            transform: translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        #result-modal.open .result-media {
+            transform: translateY(0);
+        }
+
+        /* Reverted Modal Actions - Elegant Style */
         .modal-actions {
             margin-top: 25px;
             display: flex;
@@ -244,13 +298,23 @@
             align-items: center;
             gap: 8px;
             -webkit-tap-highlight-color: transparent;
+            transition: transform 0.2s ease;
         }
-        
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
         .action-btn.secondary {
             background: rgba(255,255,255,0.2);
             color: white;
         }
 
+        .action-btn.highlight {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -258,43 +322,57 @@
     <!-- Loading Screen -->
     <div id="loader">
         <div class="spinner"></div>
-        <p>Loading Face Tracking...</p>
+        <p>Starting Camera...</p>
     </div>
 
     <!-- Main Booth -->
     <div id="booth-container">
         
-        <!-- Back Button -->
-        <a href="index.html" id="back-button">
-            <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
-        </a>
+        <div class="top-bar">
+            <!-- Back Button -->
+            <a href="index.html" id="back-button">
+                <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
+            </a>
+        </div>
 
-        <video id="input-video" class="input_video" playsinline></video>
+        <video id="input-video" class="input_video" playsinline autoplay muted></video>
         <canvas id="output-canvas"></canvas>
         <div id="countdown"></div>
         <div id="flash"></div>
 
-        <!-- Controls (Only Capture Button) -->
+        <!-- Controls -->
         <div id="controls">
-            <!-- Capture Button -->
-            <button class="btn-large" id="btn-capture" onclick="startCountdown()">
-                <i data-lucide="camera" style="width: 32px; height: 32px;"></i>
+            <!-- Swap Camera Button -->
+            <button class="glass-btn btn-small" id="btn-swap" onclick="toggleCamera()">
+                <i data-lucide="switch-camera" style="width: 20px; height: 20px;"></i>
+            </button>
+
+            <!-- Capture Photo Button -->
+            <button class="glass-btn btn-action photo" id="btn-capture" onclick="startPhotoCountdown()">
+                <i data-lucide="camera" style="width: 28px; height: 28px;"></i>
+            </button>
+
+            <!-- Toggle Video Button -->
+            <button class="glass-btn btn-action video" id="btn-video" onclick="toggleVideoRecording()">
+                <i data-lucide="video" style="width: 28px; height: 28px;"></i>
             </button>
         </div>
     </div>
 
     <!-- Result Modal -->
     <div id="result-modal">
-        <img id="result-img" src="" alt="Captured Photo">
+        <img id="result-img" class="result-media" src="" alt="Captured Photo">
+        <video id="result-video" class="result-media" controls autoplay loop playsinline></video>
+        
         <div class="modal-actions">
             <button class="action-btn secondary" onclick="closeModal()">
-                <i data-lucide="trash-2"></i> Discard
+                <i data-lucide="trash-2" style="width: 20px; height: 20px;"></i> Discard
             </button>
-            <button class="action-btn secondary" onclick="sharePhoto()">
-                <i data-lucide="share-2"></i> Share
+            <button class="action-btn highlight" id="btn-share" onclick="shareMedia()">
+                <i data-lucide="share-2" style="width: 20px; height: 20px;"></i> Share
             </button>
-            <button class="action-btn" onclick="downloadPhoto()">
-                <i data-lucide="download"></i> Save
+            <button class="action-btn secondary" onclick="downloadMedia()">
+                <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save
             </button>
         </div>
     </div>
@@ -312,30 +390,41 @@
         const flashEl = document.getElementById('flash');
         const resultModal = document.getElementById('result-modal');
         const resultImg = document.getElementById('result-img');
+        const resultVideo = document.getElementById('result-video');
+        const btnVideo = document.getElementById('btn-video');
+        const btnShare = document.getElementById('btn-share');
+
+        // Create a hidden canvas dedicated solely for recording the cropped area
+        const recordingCanvas = document.createElement('canvas');
+        const recordingCtx = recordingCanvas.getContext('2d');
 
         // --- BRAND CONFIGURATION ---
-        // Change these variables to set the default frame/effect for your brand
-        // Effects: 'none', 'sparkles', 'clown', 'cyber', 'sunglasses', 'brand-text'
-        // Frames: 'none', 'polaroid', 'neon', 'film'
-        let activeEffect = 'none'; 
-        let activeFrame = 'polaroid'; // Default active frame
-        
+        let activeFrame = 'polaroid';
         let isCapturing = false;
-        let particles = []; // For sparkle effect
-        // Global crop info updated every frame
+        let isRecording = false;
         let cropInfo = { x: 0, y: 0, w: 0, h: 0 }; 
         const TARGET_ASPECT = 4 / 5; // Standard Instagram Portrait Ratio
 
+        // Media Storage
+        let currentMediaType = 'image'; 
+        let currentMediaBlob = null;
+        let currentVideoExt = 'mp4'; 
+
+        // Video Recording Variables
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        // Camera State
+        let currentFacingMode = 'user'; 
+        let currentStream = null;
+
         // --- FRAME IMAGES CONFIGURATION ---
-        // Replace these URLs with your own PNG files.
-        // Ensure they are 4:5 aspect ratio (e.g. 1080x1350) and have transparent backgrounds.
         const FRAME_ASSETS = {
             polaroid: "assets/Photo_Frame.png",
             neon: "https://placehold.co/1080x1350/png?text=Neon+Frame+(Transparent)",
             film: "https://placehold.co/1080x1350/png?text=Film+Frame+(Transparent)"
         };
 
-        // Preload Frame Images
         const frameImages = {};
         Object.keys(FRAME_ASSETS).forEach(key => {
             const img = new Image();
@@ -344,231 +433,125 @@
             frameImages[key] = img;
         });
 
-        // --- Render Loop ---
-        
-        function onResults(results) {
-            // Resize Canvas to match video dimensions if changed
-            if (canvasElement.width !== videoElement.videoWidth || canvasElement.height !== videoElement.videoHeight) {
-                canvasElement.width = videoElement.videoWidth;
-                canvasElement.height = videoElement.videoHeight;
+        // --- Camera Setup & Swap Logic ---
+        async function startCamera(facingMode) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
             }
 
-            const w = canvasElement.width;
-            const h = canvasElement.height;
-            const screenAspect = w / h;
-
-            // Calculate Crop Dimensions (Center Weighted)
-            if (screenAspect > TARGET_ASPECT) {
-                cropInfo.h = h;
-                cropInfo.w = h * TARGET_ASPECT;
-                cropInfo.x = (w - cropInfo.w) / 2;
-                cropInfo.y = 0;
-            } else {
-                cropInfo.w = w;
-                cropInfo.h = w / TARGET_ASPECT;
-                cropInfo.x = 0;
-                cropInfo.y = (h - cropInfo.h) / 2;
-            }
-
-            // --- 1. Draw Mirrored Video & Effects ---
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, w, h);
-            
-            // Mirror
-            canvasCtx.translate(w, 0);
-            canvasCtx.scale(-1, 1);
-
-            // Draw Video
-            canvasCtx.drawImage(results.image, 0, 0, w, h);
-            
-            // Draw Face Effects (mirrored)
-            if (results.multiFaceLandmarks) {
-                for (const landmarks of results.multiFaceLandmarks) {
-                    applyEffect(landmarks);
-                }
-            }
-
-            canvasCtx.restore(); // Restore context to normal orientation
-            
-            // --- 2. Draw Guides (Overlay outside crop area) ---
-            drawCropOverlay(w, h);
-
-            // --- 3. Draw PNG Frame (Normal Orientation, inside Crop) ---
-            applyFrame(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
-
-            // Hide loader once we have first frame
-            if (loader.style.opacity !== '0') {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: facingMode,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: true
+                });
+                
+                videoElement.srcObject = currentStream;
+                videoElement.play();
+                
+            } catch (err) {
+                console.error("Camera/Mic access error:", err);
+                loader.innerHTML = "<p>Camera/Mic access denied or error.</p>";
             }
         }
 
-        // --- Drawing Helpers ---
+        function toggleCamera() {
+            if (isCapturing || isRecording) return;
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            loader.style.display = 'flex';
+            loader.style.opacity = '1';
+            startCamera(currentFacingMode);
+        }
+
+        // --- Render Loop ---
+        function renderLoop() {
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                
+                if (loader.style.opacity !== '0') {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 400);
+                }
+
+                if (canvasElement.width !== videoElement.videoWidth || canvasElement.height !== videoElement.videoHeight) {
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                }
+
+                const w = canvasElement.width;
+                const h = canvasElement.height;
+                const screenAspect = w / h;
+
+                if (screenAspect > TARGET_ASPECT) {
+                    cropInfo.h = h;
+                    cropInfo.w = h * TARGET_ASPECT;
+                    cropInfo.x = (w - cropInfo.w) / 2;
+                    cropInfo.y = 0;
+                } else {
+                    cropInfo.w = w;
+                    cropInfo.h = w / TARGET_ASPECT;
+                    cropInfo.x = 0;
+                    cropInfo.y = (h - cropInfo.h) / 2;
+                }
+
+                // Draw Base Background
+                canvasCtx.fillStyle = '#000';
+                canvasCtx.fillRect(0, 0, w, h);
+
+                // Draw Video
+                canvasCtx.save();
+                
+                if (currentFacingMode === 'user') {
+                    canvasCtx.translate(w, 0);
+                    canvasCtx.scale(-1, 1);
+                }
+
+                canvasCtx.drawImage(videoElement, 0, 0, w, h);
+                canvasCtx.restore(); 
+                
+                // Draw crop dimming
+                drawCropOverlay(w, h);
+                applyFrame(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
+
+                // If recording, copy JUST the cropped section to our hidden recording canvas
+                if (isRecording) {
+                    recordingCtx.drawImage(
+                        canvasElement, 
+                        cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
+                        0, 0, cropInfo.w, cropInfo.h 
+                    );
+                }
+            }
+            requestAnimationFrame(renderLoop);
+        }
 
         function drawCropOverlay(w, h) {
-            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // Dimming layer
-            
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.85)'; 
             if (cropInfo.y > 0) canvasCtx.fillRect(0, 0, w, cropInfo.y);
             if (cropInfo.y + cropInfo.h < h) canvasCtx.fillRect(0, cropInfo.y + cropInfo.h, w, h - (cropInfo.y + cropInfo.h));
             if (cropInfo.x > 0) canvasCtx.fillRect(0, cropInfo.y, cropInfo.x, cropInfo.h);
             if (cropInfo.x + cropInfo.w < w) canvasCtx.fillRect(cropInfo.x + cropInfo.w, cropInfo.y, w - (cropInfo.x + cropInfo.w), cropInfo.h);
             
-            canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            canvasCtx.lineWidth = 1;
-            canvasCtx.strokeRect(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
-        }
-
-        // --- Effects Logic ---
-
-        function applyEffect(landmarks) {
-            const width = canvasElement.width;
-            const height = canvasElement.height;
-
-            if (activeEffect === 'brand-text') {
-                // Indices for cheeks
-                const leftEye = landmarks[33];
-                const rightEye = landmarks[263];
-                const cheekL = landmarks[50]; // User's Left (Screen Right in Mirror)
-                const cheekR = landmarks[280]; // User's Right (Screen Left in Mirror)
-
-                // Calculate Face Rotation
-                const dx = rightEye.x - leftEye.x;
-                const dy = rightEye.y - leftEye.y;
-                const angle = Math.atan2(dy, dx);
-                
-                // Scale text based on face size
-                const faceWidth = Math.sqrt(dx*dx + dy*dy) * width;
-                const fontSize = faceWidth * 0.15; 
-
-                canvasCtx.font = `900 ${fontSize}px sans-serif`;
-                canvasCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                canvasCtx.textAlign = "center";
-                canvasCtx.textBaseline = "middle";
-                
-                // --- Draw "THE BOOTH" on LEFT Cheek (Screen Left, Landmark 50) ---
-                canvasCtx.save();
-                canvasCtx.translate(cheekL.x * width, cheekL.y * height);
-                canvasCtx.rotate(angle);
-                canvasCtx.scale(-1, 1); // Flip Text Back so it's readable
-                canvasCtx.shadowColor = "rgba(0,0,0,0.5)";
-                canvasCtx.shadowBlur = 4;
-                canvasCtx.fillText("TREND", 0, 0);
-                canvasCtx.restore();
-
-                // --- Draw "TREND" on RIGHT Cheek (Screen Right, Landmark 280) ---
-                canvasCtx.save();
-                canvasCtx.translate(cheekR.x * width, cheekR.y * height);
-                canvasCtx.rotate(angle);
-                canvasCtx.scale(-1, 1); // Flip Text Back so it's readable
-                canvasCtx.shadowColor = "rgba(0,0,0,0.5)";
-                canvasCtx.shadowBlur = 4;
-                canvasCtx.fillText("THE BOOTH", 0, 0);
-                canvasCtx.restore();
-            } 
-            else if (activeEffect === 'mesh') {
-                drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION, {color: '#C0C0C070', lineWidth: 1});
-            } 
-            else if (activeEffect === 'clown') {
-                const noseTip = landmarks[1];
-                canvasCtx.beginPath();
-                canvasCtx.arc(noseTip.x * width, noseTip.y * height, width * 0.05, 0, 2 * Math.PI);
-                canvasCtx.fillStyle = 'red';
-                canvasCtx.fill();
-                
-                const leftCheek = landmarks[234];
-                const rightCheek = landmarks[454];
-                canvasCtx.beginPath();
-                canvasCtx.arc(leftCheek.x * width, leftCheek.y * height, width * 0.03, 0, 2 * Math.PI);
-                canvasCtx.arc(rightCheek.x * width, rightCheek.y * height, width * 0.03, 0, 2 * Math.PI);
-                canvasCtx.fillStyle = 'rgba(255, 100, 100, 0.5)';
-                canvasCtx.fill();
-            }
-            else if (activeEffect === 'cyber') {
-                drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
-                drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
-                drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2});
-                
-                const time = Date.now() / 1000;
-                const y = (time % 1) * height;
-                canvasCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-                canvasCtx.lineWidth = 2;
-                canvasCtx.beginPath();
-                canvasCtx.moveTo(0, y);
-                canvasCtx.lineTo(width, y);
-                canvasCtx.stroke();
-            }
-            else if (activeEffect === 'sunglasses') {
-                const leftEye = landmarks[33];
-                const rightEye = landmarks[263];
-                const center = landmarks[6];
-
-                const eyeDistance = Math.sqrt(
-                    Math.pow((rightEye.x - leftEye.x) * width, 2) + 
-                    Math.pow((rightEye.y - leftEye.y) * height, 2)
-                );
-                
-                const glassesWidth = eyeDistance * 2.2;
-                const glassesHeight = glassesWidth * 0.4;
-                const angle = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
-
-                canvasCtx.save();
-                canvasCtx.translate(center.x * width, center.y * height);
-                canvasCtx.rotate(angle);
-                
-                canvasCtx.fillStyle = '#111';
-                canvasCtx.beginPath();
-                canvasCtx.roundRect(-glassesWidth/2, -glassesHeight/2, glassesWidth/2 - 5, glassesHeight, 10);
-                canvasCtx.fill();
-                canvasCtx.beginPath();
-                canvasCtx.roundRect(5, -glassesHeight/2, glassesWidth/2 - 5, glassesHeight, 10);
-                canvasCtx.fill();
-                canvasCtx.fillStyle = '#333';
-                canvasCtx.fillRect(-5, -glassesHeight/4, 10, 5);
-                
-                canvasCtx.restore();
-            }
-            else if (activeEffect === 'sparkles') {
-                if(Math.random() > 0.7) {
-                    particles.push({
-                        x: (landmarks[10].x * width) + (Math.random() - 0.5) * width * 0.5,
-                        y: (landmarks[10].y * height) + (Math.random() - 0.5) * height * 0.5,
-                        life: 1.0,
-                        size: Math.random() * 5 + 2
-                    });
-                }
-                
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    let p = particles[i];
-                    p.y -= 2;
-                    p.life -= 0.02;
-                    if (p.life <= 0) {
-                        particles.splice(i, 1);
-                        continue;
-                    }
-                    canvasCtx.fillStyle = `rgba(255, 215, 0, ${p.life})`;
-                    canvasCtx.beginPath();
-                    canvasCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    canvasCtx.fill();
-                }
+            if(!isRecording) {
+                canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                canvasCtx.lineWidth = 1;
+                canvasCtx.strokeRect(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
             }
         }
-
-        // --- Frame Logic ---
 
         function applyFrame(x, y, w, h) {
             if (activeFrame === 'none') return;
-
             const img = frameImages[activeFrame];
             if (img && img.complete && img.naturalHeight !== 0) {
-                // Draw the PNG scaling it to fit exactly within the crop area (4:5)
                 canvasCtx.drawImage(img, x, y, w, h);
             }
         }
 
-        // --- Capture Workflow ---
-
-        function startCountdown() {
-            if (isCapturing) return;
+        // --- Photo Workflow ---
+        function startPhotoCountdown() {
+            if (isCapturing || isRecording) return;
             isCapturing = true;
             
             let count = 3;
@@ -603,84 +586,159 @@
                     0, 0, cropInfo.w, cropInfo.h 
                 );
 
-                const dataURL = tempCanvas.toDataURL('image/png');
-                resultImg.src = dataURL;
-                resultModal.classList.add('open');
+                tempCanvas.toBlob((blob) => {
+                    currentMediaBlob = blob;
+                    const objectURL = URL.createObjectURL(blob);
+                    
+                    resultImg.src = objectURL;
+                    resultImg.style.display = 'block';
+                    resultVideo.style.display = 'none';
+                    currentMediaType = 'image';
+                    
+                    btnShare.style.display = 'flex';
+                    
+                    resultModal.classList.add('open');
+                    isCapturing = false;
+                }, 'image/png');
+
             } catch (err) {
                 console.error(err);
-                alert("Capture error. If using custom frames, ensure CORS is enabled on the image host.");
+                alert("Capture error.");
+                isCapturing = false;
             }
-            isCapturing = false;
         }
 
-        function downloadPhoto() {
+        // --- Video Recording Workflow (Toggle) ---
+        function toggleVideoRecording() {
+            if (isCapturing) return;
+
+            if (isRecording) {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+                return;
+            }
+            
+            try {
+                recordedChunks = [];
+                
+                recordingCanvas.width = cropInfo.w;
+                recordingCanvas.height = cropInfo.h;
+                
+                const canvasStream = recordingCanvas.captureStream(30); 
+                let tracks = [...canvasStream.getVideoTracks()];
+
+                if (currentStream) {
+                    const audioTracks = currentStream.getAudioTracks();
+                    if (audioTracks.length > 0) tracks.push(audioTracks[0]);
+                }
+
+                const combinedStream = new MediaStream(tracks);
+
+                let mimeType = 'video/webm';
+                if (MediaRecorder.isTypeSupported('video/mp4')) {
+                    mimeType = 'video/mp4';
+                }
+
+                mediaRecorder = new MediaRecorder(combinedStream, { mimeType: mimeType });
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = finishRecording;
+                mediaRecorder.start();
+                isRecording = true;
+
+                // UI Updates
+                btnVideo.classList.add('recording');
+                btnVideo.innerHTML = '<i data-lucide="square" style="width: 24px; height: 24px; fill: white;"></i>';
+                lucide.createIcons();
+
+            } catch(e) {
+                console.error("Recording failed to start", e);
+                alert("Video recording is not supported on this browser.");
+            }
+        }
+
+        function finishRecording() {
+            isRecording = false;
+            
+            btnVideo.classList.remove('recording');
+            btnVideo.innerHTML = '<i data-lucide="video" style="width: 28px; height: 28px;"></i>';
+            lucide.createIcons();
+
+            currentMediaBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+            const videoUrl = URL.createObjectURL(currentMediaBlob);
+
+            resultVideo.src = videoUrl;
+            resultVideo.style.display = 'block';
+            resultImg.style.display = 'none';
+            currentMediaType = 'video';
+            currentVideoExt = 'mp4'; 
+
+            btnShare.style.display = 'flex';
+            resultModal.classList.add('open');
+        }
+
+        // --- Download & Share ---
+        function downloadMedia() {
             const link = document.createElement('a');
-            link.download = `photobooth-${Date.now()}.png`;
-            link.href = resultImg.src;
+            const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
+            
+            link.download = `booth-trend-${Date.now()}.${ext}`;
+            link.href = URL.createObjectURL(currentMediaBlob);
+            
             link.click();
             closeModal();
         }
 
-        async function sharePhoto() {
-            if (!navigator.canShare) {
-                alert("Sharing is not fully supported on this device/browser.");
+        async function shareMedia() {
+            if (!navigator.share || !navigator.canShare) {
+                alert("Sharing is not supported on this device/browser.");
                 return;
             }
 
             try {
-                const dataUrl = resultImg.src;
-                const blob = await (await fetch(dataUrl)).blob();
-                const file = new File([blob], `photo-booth-${Date.now()}.png`, { type: blob.type });
+                const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
+                const mime = currentMediaType === 'image' ? 'image/png' : 'video/mp4';
+                
+                const file = new File([currentMediaBlob], `booth-trend-${Date.now()}.${ext}`, { type: mime });
 
-                if (navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        title: 'Virtual Photo Booth',
-                        text: 'Booth Trend, Capture The Trend!',
-                        files: [file]
-                    });
+                const shareData = {
+                    title: 'Virtual Photo Booth',
+                    text: 'Booth Trend, Capture The Trend!',
+                    files: [file]
+                };
+
+                if (navigator.canShare(shareData)) {
+                    await navigator.share(shareData);
                 } else {
-                    alert("Your browser supports sharing, but not sharing image files directly.");
+                    throw new Error('NotAllowedError'); 
                 }
             } catch (error) {
                 if (error.name !== 'AbortError') {
-                    console.error('Error sharing:', error);
-                    alert('Sharing failed. You can try saving the image instead.');
+                    console.warn('Share blocked by browser:', error);
+                    alert("Direct video sharing is blocked by your browser. We are saving it to your device so you can share it straight from your gallery!");
+                    downloadMedia(); 
                 }
             }
         }
 
         function closeModal() {
             resultModal.classList.remove('open');
+            if (currentMediaType === 'video') {
+                resultVideo.pause();
+                resultVideo.src = ""; 
+            }
         }
 
-        // --- MediaPipe Setup ---
-        
-        const faceMesh = new FaceMesh({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-        }});
-
-        faceMesh.setOptions({
-            maxNumFaces: 1,
-            refineLandmarks: true,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
+        // --- Initialization ---
+        videoElement.addEventListener('loadeddata', () => {
+            requestAnimationFrame(renderLoop);
         });
 
-        faceMesh.onResults(onResults);
-
-        const camera = new Camera(videoElement, {
-            onFrame: async () => {
-                await faceMesh.send({image: videoElement});
-            },
-            width: 1280,
-            height: 720
-        });
-
-        camera.start().catch(e => {
-            console.error(e);
-            loader.innerHTML = "<p>Camera access denied or error.</p>";
-        });
-
+        startCamera(currentFacingMode);
     </script>
 </body>
 </html>
