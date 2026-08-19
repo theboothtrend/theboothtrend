@@ -120,6 +120,8 @@
             background: #000;
             overflow: hidden;
             width: 100%;
+            /* FIX: Pushes the flex center upwards so it balances with the bottom buttons */
+            padding-bottom: 110px; 
         }
 
         #input-video { display: none; }
@@ -142,6 +144,11 @@
             gap: 24px;
             z-index: 150;
             pointer-events: none;
+        }
+
+        @media (min-width: 768px) {
+            #controls { bottom: 60px; gap: 30px; } 
+            #booth-container { padding-bottom: 140px; }
         }
 
         /* Base floating button style */
@@ -276,7 +283,7 @@
             transform: translateY(0);
         }
 
-        /* Reverted Modal Actions - Elegant Style */
+        /* Modal Actions - Elegant Style */
         .modal-actions {
             margin-top: 25px;
             display: flex;
