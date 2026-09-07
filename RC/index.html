@@ -391,366 +391,353 @@
 
     <script>
         // Initialize Icons
-        lucide.createIcons();
+lucide.createIcons();
 
-        // DOM Elements
-        const videoElement = document.getElementById('input-video');
-        const canvasElement = document.getElementById('output-canvas');
-        const canvasCtx = canvasElement.getContext('2d');
-        const loader = document.getElementById('loader');
-        const countdownEl = document.getElementById('countdown');
-        const flashEl = document.getElementById('flash');
-        const resultModal = document.getElementById('result-modal');
-        const resultImg = document.getElementById('result-img');
-        const resultVideo = document.getElementById('result-video');
-        const btnVideo = document.getElementById('btn-video');
-        const btnShare = document.getElementById('btn-share');
+// DOM Elements
+const videoElement = document.getElementById('input-video');
+const canvasElement = document.getElementById('output-canvas');
+const canvasCtx = canvasElement.getContext('2d');
+const loader = document.getElementById('loader');
+const countdownEl = document.getElementById('countdown');
+const flashEl = document.getElementById('flash');
+const resultModal = document.getElementById('result-modal');
+const resultImg = document.getElementById('result-img');
+const resultVideo = document.getElementById('result-video');
+const btnVideo = document.getElementById('btn-video');
+const btnShare = document.getElementById('btn-share');
 
-        // Create a hidden canvas dedicated solely for recording the cropped area
-        const recordingCanvas = document.createElement('canvas');
-        const recordingCtx = recordingCanvas.getContext('2d');
+// Hidden canvas for recording the cropped area
+const recordingCanvas = document.createElement('canvas');
+const recordingCtx = recordingCanvas.getContext('2d');
 
-        // --- BRAND CONFIGURATION ---
-        let activeFrame = 'polaroid';
-        let isCapturing = false;
-        let isRecording = false;
-        let cropInfo = { x: 0, y: 0, w: 0, h: 0 }; 
-        const TARGET_ASPECT = 4 / 5; // Standard Instagram Portrait Ratio
+// --- APP STATE & CONFIGURATION ---
+let isCapturing = false;
+let isRecording = false;
+let isRendering = true; // Controls the render loop
+let cropInfo = { x: 0, y: 0, w: 0, h: 0 }; 
+const TARGET_ASPECT = 4 / 5; // Standard Portrait Ratio
 
-        // Media Storage
-        let currentMediaType = 'image'; 
-        let currentMediaBlob = null;
-        let currentVideoExt = 'mp4'; 
+// Media Storage
+let currentMediaType = 'image'; 
+let currentMediaBlob = null;
+let currentVideoExt = 'mp4'; 
 
-        // Video Recording Variables
-        let mediaRecorder;
-        let recordedChunks = [];
+// Video Recording Variables
+let mediaRecorder;
+let recordedChunks = [];
+let currentFacingMode = 'user'; 
+let currentStream = null;
 
-        // Camera State
-        let currentFacingMode = 'user'; 
-        let currentStream = null;
+// --- SINGLE BRAND FRAME SETUP ---
+const brandFrame = new Image();
+brandFrame.crossOrigin = "anonymous";
+brandFrame.src = "assets/RC.png"; // Your fixed RC Beauty & Bakes frame
 
-        // --- FRAME IMAGES CONFIGURATION ---
-        const FRAME_ASSETS = {
-            polaroid: "assets/RC.png",
-            neon: "https://placehold.co/1080x1350/png?text=Neon+Frame+(Transparent)",
-            film: "https://placehold.co/1080x1350/png?text=Film+Frame+(Transparent)"
+// --- Camera Setup & Swap Logic ---
+async function startCamera(facingMode) {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+    }
+
+    try {
+        currentStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: facingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: true
+        });
+        
+        videoElement.srcObject = currentStream;
+        videoElement.play();
+        
+    } catch (err) {
+        console.error("Camera/Mic access error:", err);
+        loader.innerHTML = "<p>Camera/Mic access denied or error.</p>";
+    }
+}
+
+function toggleCamera() {
+    if (isCapturing || isRecording) return;
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+    loader.style.display = 'flex';
+    loader.style.opacity = '1';
+    startCamera(currentFacingMode);
+}
+
+// --- Render Loop ---
+function renderLoop() {
+    if (!isRendering) return; // Pauses processing when modal is open
+
+    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+        
+        if (loader.style.opacity !== '0') {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 400);
+        }
+
+        if (canvasElement.width !== videoElement.videoWidth || canvasElement.height !== videoElement.videoHeight) {
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+        }
+
+        const w = canvasElement.width;
+        const h = canvasElement.height;
+        const screenAspect = w / h;
+
+        if (screenAspect > TARGET_ASPECT) {
+            cropInfo.h = h;
+            cropInfo.w = h * TARGET_ASPECT;
+            cropInfo.x = (w - cropInfo.w) / 2;
+            cropInfo.y = 0;
+        } else {
+            cropInfo.w = w;
+            cropInfo.h = w / TARGET_ASPECT;
+            cropInfo.x = 0;
+            cropInfo.y = (h - cropInfo.h) / 2.5; 
+        }
+
+        // Draw Base Background
+        canvasCtx.fillStyle = '#000';
+        canvasCtx.fillRect(0, 0, w, h);
+
+        // Draw Video
+        canvasCtx.save();
+        if (currentFacingMode === 'user') {
+            canvasCtx.translate(w, 0);
+            canvasCtx.scale(-1, 1);
+        }
+        canvasCtx.drawImage(videoElement, 0, 0, w, h);
+        canvasCtx.restore(); 
+        
+        // Draw crop dimming & frame
+        drawCropOverlay(w, h);
+        if (brandFrame.complete && brandFrame.naturalHeight !== 0) {
+            canvasCtx.drawImage(brandFrame, cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
+        }
+
+        // If recording, copy JUST the cropped section to our hidden recording canvas
+        if (isRecording) {
+            recordingCtx.drawImage(
+                canvasElement, 
+                cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
+                0, 0, cropInfo.w, cropInfo.h 
+            );
+        }
+    }
+    requestAnimationFrame(renderLoop);
+}
+
+function drawCropOverlay(w, h) {
+    canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.85)'; 
+    if (cropInfo.y > 0) canvasCtx.fillRect(0, 0, w, cropInfo.y);
+    if (cropInfo.y + cropInfo.h < h) canvasCtx.fillRect(0, cropInfo.y + cropInfo.h, w, h - (cropInfo.y + cropInfo.h));
+    if (cropInfo.x > 0) canvasCtx.fillRect(0, cropInfo.y, cropInfo.x, cropInfo.h);
+    if (cropInfo.x + cropInfo.w < w) canvasCtx.fillRect(cropInfo.x + cropInfo.w, cropInfo.y, w - (cropInfo.x + cropInfo.w), cropInfo.h);
+    
+    if(!isRecording) {
+        canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        canvasCtx.lineWidth = 1;
+        canvasCtx.strokeRect(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
+    }
+}
+
+// --- Photo Workflow ---
+function startPhotoCountdown() {
+    if (isCapturing || isRecording) return;
+    isCapturing = true;
+    
+    let count = 3;
+    countdownEl.style.display = 'block';
+    countdownEl.innerText = count;
+
+    const timer = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownEl.innerText = count;
+        } else {
+            clearInterval(timer);
+            countdownEl.style.display = 'none';
+            takePhoto();
+        }
+    }, 1000);
+}
+
+function takePhoto() {
+    flashEl.style.opacity = '1';
+    setTimeout(() => flashEl.style.opacity = '0', 100);
+    
+    try {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = cropInfo.w;
+        tempCanvas.height = cropInfo.h;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        tempCtx.drawImage(
+            canvasElement, 
+            cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
+            0, 0, cropInfo.w, cropInfo.h 
+        );
+
+        tempCanvas.toBlob((blob) => {
+            currentMediaBlob = blob;
+            const objectURL = URL.createObjectURL(blob);
+            
+            resultImg.src = objectURL;
+            resultImg.style.display = 'block';
+            resultVideo.style.display = 'none';
+            currentMediaType = 'image';
+            
+            btnShare.style.display = 'flex';
+            
+            isRendering = false; // Pause rendering
+            resultModal.classList.add('open');
+            isCapturing = false;
+        }, 'image/png');
+
+    } catch (err) {
+        console.error(err);
+        alert("Capture error.");
+        isCapturing = false;
+    }
+}
+
+// --- Video Recording Workflow ---
+function toggleVideoRecording() {
+    if (isCapturing) return;
+
+    if (isRecording) {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+        return;
+    }
+    
+    try {
+        recordedChunks = [];
+        
+        recordingCanvas.width = cropInfo.w;
+        recordingCanvas.height = cropInfo.h;
+        
+        const canvasStream = recordingCanvas.captureStream(30); 
+        let tracks = [...canvasStream.getVideoTracks()];
+
+        if (currentStream) {
+            const audioTracks = currentStream.getAudioTracks();
+            if (audioTracks.length > 0) tracks.push(audioTracks[0]);
+        }
+
+        const combinedStream = new MediaStream(tracks);
+
+        let mimeType = 'video/webm';
+        if (MediaRecorder.isTypeSupported('video/mp4')) {
+            mimeType = 'video/mp4';
+        }
+
+        mediaRecorder = new MediaRecorder(combinedStream, { mimeType: mimeType });
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
         };
 
-        const frameImages = {};
-        Object.keys(FRAME_ASSETS).forEach(key => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = FRAME_ASSETS[key];
-            frameImages[key] = img;
-        });
+        mediaRecorder.onstop = finishRecording;
+        mediaRecorder.start();
+        isRecording = true;
 
-        // --- Camera Setup & Swap Logic ---
-        async function startCamera(facingMode) {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
+        btnVideo.classList.add('recording');
+        btnVideo.innerHTML = '<i data-lucide="square" style="width: 24px; height: 24px; fill: white;"></i>';
+        lucide.createIcons();
 
-            try {
-                currentStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: facingMode,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: true
-                });
-                
-                videoElement.srcObject = currentStream;
-                videoElement.play();
-                
-            } catch (err) {
-                console.error("Camera/Mic access error:", err);
-                loader.innerHTML = "<p>Camera/Mic access denied or error.</p>";
-            }
+    } catch(e) {
+        console.error("Recording failed", e);
+        alert("Video recording is not supported on this browser.");
+    }
+}
+
+function finishRecording() {
+    isRecording = false;
+    
+    btnVideo.classList.remove('recording');
+    btnVideo.innerHTML = '<i data-lucide="video" style="width: 28px; height: 28px;"></i>';
+    lucide.createIcons();
+
+    currentMediaBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+    const videoUrl = URL.createObjectURL(currentMediaBlob);
+
+    resultVideo.src = videoUrl;
+    resultVideo.style.display = 'block';
+    resultImg.style.display = 'none';
+    currentMediaType = 'video';
+    currentVideoExt = 'mp4'; 
+
+    btnShare.style.display = 'flex';
+    
+    isRendering = false; // Pause rendering
+    resultModal.classList.add('open');
+}
+
+// --- Download & Share ---
+function downloadMedia() {
+    const link = document.createElement('a');
+    const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
+    
+    link.download = `rc-beauty-${Date.now()}.${ext}`;
+    link.href = URL.createObjectURL(currentMediaBlob);
+    
+    link.click();
+    closeModal();
+}
+
+async function shareMedia() {
+    if (!navigator.share || !navigator.canShare) {
+        alert("Sharing is not supported on this device/browser.");
+        return;
+    }
+
+    try {
+        const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
+        const mime = currentMediaType === 'image' ? 'image/png' : 'video/mp4';
+        
+        const file = new File([currentMediaBlob], `rc-beauty-${Date.now()}.${ext}`, { type: mime });
+
+        const shareData = {
+            title: 'RC Beauty & Bakes',
+            text: '',
+            files: [file]
+        };
+
+        if (navigator.canShare(shareData)) {
+            await navigator.share(shareData);
+        } else {
+            throw new Error('NotAllowedError'); 
         }
-
-        function toggleCamera() {
-            if (isCapturing || isRecording) return;
-            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            loader.style.display = 'flex';
-            loader.style.opacity = '1';
-            startCamera(currentFacingMode);
+    } catch (error) {
+        if (error.name !== 'AbortError') {
+            console.warn('Share blocked:', error);
+            alert("Direct video sharing is blocked. We are saving it so you can share it straight from your gallery!");
+            downloadMedia(); 
         }
+    }
+}
 
-        // --- Render Loop ---
-        function renderLoop() {
-            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-                
-                if (loader.style.opacity !== '0') {
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.style.display = 'none', 400);
-                }
+function closeModal() {
+    resultModal.classList.remove('open');
+    if (currentMediaType === 'video') {
+        resultVideo.pause();
+        resultVideo.src = ""; 
+    }
+    
+    isRendering = true; // Resume rendering
+    requestAnimationFrame(renderLoop);
+}
 
-                if (canvasElement.width !== videoElement.videoWidth || canvasElement.height !== videoElement.videoHeight) {
-                    canvasElement.width = videoElement.videoWidth;
-                    canvasElement.height = videoElement.videoHeight;
-                }
+// --- Initialization ---
+videoElement.addEventListener('loadeddata', () => {
+    requestAnimationFrame(renderLoop);
+});
 
-                const w = canvasElement.width;
-                const h = canvasElement.height;
-                const screenAspect = w / h;
-
-                if (screenAspect > TARGET_ASPECT) {
-                    cropInfo.h = h;
-                    cropInfo.w = h * TARGET_ASPECT;
-                    cropInfo.x = (w - cropInfo.w) / 2;
-                    cropInfo.y = 0;
-                } else {
-                    cropInfo.w = w;
-                    cropInfo.h = w / TARGET_ASPECT;
-                    cropInfo.x = 0;
-                    // Changing to / 3 pushes the frame higher up the screen
-                    cropInfo.y = (h - cropInfo.h) / 2.5; 
-                }
-                // Draw Base Background
-                canvasCtx.fillStyle = '#000';
-                canvasCtx.fillRect(0, 0, w, h);
-
-                // Draw Video
-                canvasCtx.save();
-                
-                if (currentFacingMode === 'user') {
-                    canvasCtx.translate(w, 0);
-                    canvasCtx.scale(-1, 1);
-                }
-
-                canvasCtx.drawImage(videoElement, 0, 0, w, h);
-                canvasCtx.restore(); 
-                
-                // Draw crop dimming
-                drawCropOverlay(w, h);
-                applyFrame(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
-
-                // If recording, copy JUST the cropped section to our hidden recording canvas
-                if (isRecording) {
-                    recordingCtx.drawImage(
-                        canvasElement, 
-                        cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
-                        0, 0, cropInfo.w, cropInfo.h 
-                    );
-                }
-            }
-            requestAnimationFrame(renderLoop);
-        }
-
-        function drawCropOverlay(w, h) {
-            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.85)'; 
-            if (cropInfo.y > 0) canvasCtx.fillRect(0, 0, w, cropInfo.y);
-            if (cropInfo.y + cropInfo.h < h) canvasCtx.fillRect(0, cropInfo.y + cropInfo.h, w, h - (cropInfo.y + cropInfo.h));
-            if (cropInfo.x > 0) canvasCtx.fillRect(0, cropInfo.y, cropInfo.x, cropInfo.h);
-            if (cropInfo.x + cropInfo.w < w) canvasCtx.fillRect(cropInfo.x + cropInfo.w, cropInfo.y, w - (cropInfo.x + cropInfo.w), cropInfo.h);
-            
-            if(!isRecording) {
-                canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                canvasCtx.lineWidth = 1;
-                canvasCtx.strokeRect(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
-            }
-        }
-
-        function applyFrame(x, y, w, h) {
-            if (activeFrame === 'none') return;
-            const img = frameImages[activeFrame];
-            if (img && img.complete && img.naturalHeight !== 0) {
-                canvasCtx.drawImage(img, x, y, w, h);
-            }
-        }
-
-        // --- Photo Workflow ---
-        function startPhotoCountdown() {
-            if (isCapturing || isRecording) return;
-            isCapturing = true;
-            
-            let count = 3;
-            countdownEl.style.display = 'block';
-            countdownEl.innerText = count;
-
-            const timer = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    countdownEl.innerText = count;
-                } else {
-                    clearInterval(timer);
-                    countdownEl.style.display = 'none';
-                    takePhoto();
-                }
-            }, 1000);
-        }
-
-        function takePhoto() {
-            flashEl.style.opacity = '1';
-            setTimeout(() => flashEl.style.opacity = '0', 100);
-            
-            try {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = cropInfo.w;
-                tempCanvas.height = cropInfo.h;
-                const tempCtx = tempCanvas.getContext('2d');
-
-                tempCtx.drawImage(
-                    canvasElement, 
-                    cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
-                    0, 0, cropInfo.w, cropInfo.h 
-                );
-
-                tempCanvas.toBlob((blob) => {
-                    currentMediaBlob = blob;
-                    const objectURL = URL.createObjectURL(blob);
-                    
-                    resultImg.src = objectURL;
-                    resultImg.style.display = 'block';
-                    resultVideo.style.display = 'none';
-                    currentMediaType = 'image';
-                    
-                    btnShare.style.display = 'flex';
-                    
-                    resultModal.classList.add('open');
-                    isCapturing = false;
-                }, 'image/png');
-
-            } catch (err) {
-                console.error(err);
-                alert("Capture error.");
-                isCapturing = false;
-            }
-        }
-
-        // --- Video Recording Workflow (Toggle) ---
-        function toggleVideoRecording() {
-            if (isCapturing) return;
-
-            if (isRecording) {
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                }
-                return;
-            }
-            
-            try {
-                recordedChunks = [];
-                
-                recordingCanvas.width = cropInfo.w;
-                recordingCanvas.height = cropInfo.h;
-                
-                const canvasStream = recordingCanvas.captureStream(30); 
-                let tracks = [...canvasStream.getVideoTracks()];
-
-                if (currentStream) {
-                    const audioTracks = currentStream.getAudioTracks();
-                    if (audioTracks.length > 0) tracks.push(audioTracks[0]);
-                }
-
-                const combinedStream = new MediaStream(tracks);
-
-                let mimeType = 'video/webm';
-                if (MediaRecorder.isTypeSupported('video/mp4')) {
-                    mimeType = 'video/mp4';
-                }
-
-                mediaRecorder = new MediaRecorder(combinedStream, { mimeType: mimeType });
-
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) recordedChunks.push(e.data);
-                };
-
-                mediaRecorder.onstop = finishRecording;
-                mediaRecorder.start();
-                isRecording = true;
-
-                // UI Updates
-                btnVideo.classList.add('recording');
-                btnVideo.innerHTML = '<i data-lucide="square" style="width: 24px; height: 24px; fill: white;"></i>';
-                lucide.createIcons();
-
-            } catch(e) {
-                console.error("Recording failed to start", e);
-                alert("Video recording is not supported on this browser.");
-            }
-        }
-
-        function finishRecording() {
-            isRecording = false;
-            
-            btnVideo.classList.remove('recording');
-            btnVideo.innerHTML = '<i data-lucide="video" style="width: 28px; height: 28px;"></i>';
-            lucide.createIcons();
-
-            currentMediaBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-            const videoUrl = URL.createObjectURL(currentMediaBlob);
-
-            resultVideo.src = videoUrl;
-            resultVideo.style.display = 'block';
-            resultImg.style.display = 'none';
-            currentMediaType = 'video';
-            currentVideoExt = 'mp4'; 
-
-            btnShare.style.display = 'flex';
-            resultModal.classList.add('open');
-        }
-
-        // --- Download & Share ---
-        function downloadMedia() {
-            const link = document.createElement('a');
-            const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
-            
-            link.download = `booth-trend-${Date.now()}.${ext}`;
-            link.href = URL.createObjectURL(currentMediaBlob);
-            
-            link.click();
-            closeModal();
-        }
-
-        async function shareMedia() {
-            if (!navigator.share || !navigator.canShare) {
-                alert("Sharing is not supported on this device/browser.");
-                return;
-            }
-
-            try {
-                const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
-                const mime = currentMediaType === 'image' ? 'image/png' : 'video/mp4';
-                
-                const file = new File([currentMediaBlob], `booth-trend-${Date.now()}.${ext}`, { type: mime });
-
-                const shareData = {
-                    title: 'Virtual Photo Booth',
-                    text: '',
-                    files: [file]
-                };
-
-                if (navigator.canShare(shareData)) {
-                    await navigator.share(shareData);
-                } else {
-                    throw new Error('NotAllowedError'); 
-                }
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.warn('Share blocked by browser:', error);
-                    alert("Direct video sharing is blocked by your browser. We are saving it to your device so you can share it straight from your gallery!");
-                    downloadMedia(); 
-                }
-            }
-        }
-
-        function closeModal() {
-            resultModal.classList.remove('open');
-            if (currentMediaType === 'video') {
-                resultVideo.pause();
-                resultVideo.src = ""; 
-            }
-        }
-
-        // --- Initialization ---
-        videoElement.addEventListener('loadeddata', () => {
-            requestAnimationFrame(renderLoop);
-        });
-
-        startCamera(currentFacingMode);
+startCamera(currentFacingMode);
     </script>
 </body>
 </html>
