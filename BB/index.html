@@ -120,7 +120,6 @@
             background: #000;
             overflow: hidden;
             width: 100%;
-            /* Removed the large padding-bottom so the camera can stretch fully */
             padding-bottom: 0; 
         }
         #input-video { display: none; }
@@ -131,6 +130,25 @@
             object-fit: contain;
         }
 
+        /* Recording Timer */
+        #recording-timer {
+            position: absolute;
+            bottom: max(120px, calc(env(safe-area-inset-bottom) + 120px));
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 59, 48, 0.9);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            display: none;
+            z-index: 150;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
         /* UI Controls Overlay */
         #controls {
             position: absolute;
@@ -138,7 +156,6 @@
             left: 0;
             width: 100%;
             display: grid;
-            /* Creates 3 columns: side columns take up equal space, center sizes to the button */
             grid-template-columns: 1fr auto 1fr; 
             align-items: center;
             justify-items: center;
@@ -150,6 +167,7 @@
         @media (min-width: 768px) {
             #controls { bottom: 60px; gap: 30px; } 
             #booth-container { padding-bottom: 140px; }
+            #recording-timer { bottom: 150px; }
         }
 
         /* Base floating button style */
@@ -250,7 +268,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.85); /* Frosted background */
+            background: rgba(0,0,0,0.85); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             z-index: 200;
@@ -348,6 +366,8 @@
         <div id="countdown"></div>
         <div id="flash"></div>
 
+        <div id="recording-timer">00:20</div>
+
         <!-- Controls -->
         <div id="controls">
             <!-- Swap Camera Button -->
@@ -401,6 +421,7 @@
         const resultVideo = document.getElementById('result-video');
         const btnVideo = document.getElementById('btn-video');
         const btnShare = document.getElementById('btn-share');
+        const timerEl = document.getElementById('recording-timer');
 
         // Create a hidden canvas dedicated solely for recording the cropped area
         const recordingCanvas = document.createElement('canvas');
@@ -417,6 +438,8 @@
         let currentMediaType = 'image'; 
         let currentMediaBlob = null;
         let currentVideoExt = 'mp4'; 
+        let recordingInterval = null;
+        let recordingTimeLeft = 20;
 
         // Video Recording Variables
         let mediaRecorder;
@@ -579,59 +602,58 @@
         }
 
         // --- Google Drive Upload ---
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyOSONFSlxtb-XVa9XN2U2hnzWlbObbuPB-iCYL3x6WcJTLFEEjUlrSCQy3NuoVgdIa/exec'; // <-- Paste the URL from Step 2 here
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxp-9Q2WwXjzmWr57KiKz-EKJKKjacg-XDnEITYCxY8aAmIb1TcVfaAPfiNra1PiUD1kQ/exec'; 
 
-function uploadToGoogleDrive(dataUrl, fileExtension, mimeType) {
-    // The Fix: Split explicitly by 'base64,' to avoid breaking on internal commas
-    const base64Data = dataUrl.split('base64,')[1];
-    
-    if (!base64Data) {
-        console.error("Error: Base64 data is empty.");
-        return;
-    }
-
-    const payload = {
-        action: 'upload_image', 
-        base64: base64Data,
-        filename: `booth-trend-${Date.now()}.${fileExtension}`,
-        mimeType: mimeType
-    };
-
-    console.log(`Sending file to Drive. Base64 length: ${base64Data.length} characters`);
-
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        redirect: 'follow', 
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    })
-    .then(response => response.text())
-    .then(text => {
-        try {
-            const data = JSON.parse(text);
-            console.log('Drive response:', data);
-            if(data.status === 'success') {
-                console.log('Saved to Drive successfully!', data.url);
-            } else {
-                console.error('Apps Script Error:', data.message);
+        function uploadToGoogleDrive(dataUrl, fileExtension, mimeType) {
+            // Split explicitly by 'base64,' to avoid breaking on internal commas in video MIME types
+            const base64Data = dataUrl.split('base64,')[1];
+            
+            if (!base64Data) {
+                console.error("Error: Base64 data is empty.");
+                return;
             }
-        } catch (err) {
-            console.error('Google Apps Script failed with an HTML error:');
-            console.error(text);
-        }
-    })
-    .catch(error => console.error('Network/Fetch Error:', error));
-}
 
-// Helper function to convert Video Blob to Base64 Data URL
-function blobToDataURL(blob) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-    });
-}
+            const payload = {
+                action: 'upload_image', 
+                base64: base64Data,
+                filename: `booth-trend-${Date.now()}.${fileExtension}`,
+                mimeType: mimeType
+            };
+
+            console.log(`Sending file to Drive. Base64 length: ${base64Data.length} characters`);
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow', 
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(response => response.text())
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Drive response:', data);
+                    if(data.status === 'success') {
+                        console.log('Saved to Drive successfully!', data.url);
+                    } else {
+                        console.error('Apps Script Error:', data.message);
+                    }
+                } catch (err) {
+                    console.error('Google Apps Script failed with an HTML error:');
+                    console.error(text);
+                }
+            })
+            .catch(error => console.error('Network/Fetch Error:', error));
+        }
+
+        function blobToDataURL(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(blob);
+            });
+        }
 
         function takePhoto() {
             flashEl.style.opacity = '1';
@@ -662,8 +684,10 @@ function blobToDataURL(blob) {
                     
                     resultModal.classList.add('open');
                     isCapturing = false;
+                    
+                    // Upload Image directly
                     uploadToGoogleDrive(tempCanvas.toDataURL('image/jpeg', 0.8), 'jpg', 'image/jpeg');
-                }, 'image/png');
+                }, 'image/jpeg');
 
             } catch (err) {
                 console.error(err);
@@ -689,7 +713,8 @@ function blobToDataURL(blob) {
                 recordingCanvas.width = cropInfo.w;
                 recordingCanvas.height = cropInfo.h;
                 
-                const canvasStream = recordingCanvas.captureStream(15);
+                // Drop framerate to 15fps to save file size for Apps Script constraints
+                const canvasStream = recordingCanvas.captureStream(15); 
                 let tracks = [...canvasStream.getVideoTracks()];
 
                 if (currentStream) {
@@ -704,10 +729,11 @@ function blobToDataURL(blob) {
                     mimeType = 'video/mp4';
                 }
 
+                // Constrain Bitrate for lighter payloads
                 const options = {
-    mimeType: mimeType,
-    videoBitsPerSecond: 500000 
-};
+                    mimeType: mimeType,
+                    videoBitsPerSecond: 500000 
+                };
 
                 mediaRecorder = new MediaRecorder(combinedStream, options);
 
@@ -724,6 +750,25 @@ function blobToDataURL(blob) {
                 btnVideo.innerHTML = '<i data-lucide="square" style="width: 24px; height: 24px; fill: white;"></i>';
                 lucide.createIcons();
 
+                // Start 20-Second Countdown
+                recordingTimeLeft = 20;
+                timerEl.innerText = "00:20";
+                timerEl.style.display = 'block';
+                
+                recordingInterval = setInterval(() => {
+                    recordingTimeLeft--;
+                    
+                    const formattedTime = recordingTimeLeft < 10 ? `0${recordingTimeLeft}` : recordingTimeLeft;
+                    timerEl.innerText = `00:${formattedTime}`;
+                    
+                    if (recordingTimeLeft <= 0) {
+                        clearInterval(recordingInterval);
+                        if (mediaRecorder && mediaRecorder.state === 'recording') {
+                            mediaRecorder.stop();
+                        }
+                    }
+                }, 1000);
+
             } catch(e) {
                 console.error("Recording failed to start", e);
                 alert("Video recording is not supported on this browser.");
@@ -731,43 +776,47 @@ function blobToDataURL(blob) {
         }
 
         function finishRecording() {
-    isRecording = false;
-    
-    btnVideo.classList.remove('recording');
-    btnVideo.innerHTML = '<i data-lucide="video" style="width: 28px; height: 28px;"></i>';
-    lucide.createIcons();
+            isRecording = false;
+            
+            // Clear and hide timer
+            clearInterval(recordingInterval);
+            timerEl.style.display = 'none';
+            
+            btnVideo.classList.remove('recording');
+            btnVideo.innerHTML = '<i data-lucide="video" style="width: 28px; height: 28px;"></i>';
+            lucide.createIcons();
 
-    currentMediaBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-    
-    // Check if the video actually captured data
-    console.log(`Video Blob created. Size: ${currentMediaBlob.size} bytes`);
-    if (currentMediaBlob.size === 0) {
-        console.error("Video recording failed: File size is 0 bytes.");
-        alert("Camera didn't capture data properly. Try recording slightly longer.");
-        return;
-    }
+            currentMediaBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+            
+            console.log(`Video Blob created. Size: ${currentMediaBlob.size} bytes`);
+            if (currentMediaBlob.size === 0) {
+                console.error("Video recording failed: File size is 0 bytes.");
+                alert("Camera didn't capture data properly. Try recording slightly longer.");
+                return;
+            }
 
-    const videoUrl = URL.createObjectURL(currentMediaBlob);
-    resultVideo.src = videoUrl;
-    resultVideo.style.display = 'block';
-    resultImg.style.display = 'none';
-    currentMediaType = 'video';
-    
-    currentVideoExt = mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm'; 
+            const videoUrl = URL.createObjectURL(currentMediaBlob);
+            resultVideo.src = videoUrl;
+            resultVideo.style.display = 'block';
+            resultImg.style.display = 'none';
+            currentMediaType = 'video';
+            
+            currentVideoExt = mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm'; 
 
-    btnShare.style.display = 'flex';
-    resultModal.classList.add('open');
+            btnShare.style.display = 'flex';
+            resultModal.classList.add('open');
 
-    // Convert Video to Base64 and Upload
-    blobToDataURL(currentMediaBlob).then(dataUrl => {
-        console.log("Uploading video to Google Drive...");
-        uploadToGoogleDrive(dataUrl, currentVideoExt, mediaRecorder.mimeType);
-    }).catch(err => console.error("Video conversion error:", err));
-}
+            // Convert Video to Base64 and Upload
+            blobToDataURL(currentMediaBlob).then(dataUrl => {
+                console.log("Uploading video to Google Drive...");
+                uploadToGoogleDrive(dataUrl, currentVideoExt, mediaRecorder.mimeType);
+            }).catch(err => console.error("Video conversion error:", err));
+        }
+
         // --- Download & Share ---
         function downloadMedia() {
             const link = document.createElement('a');
-            const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
+            const ext = currentMediaType === 'image' ? 'jpg' : currentVideoExt;
             
             link.download = `booth-trend-${Date.now()}.${ext}`;
             link.href = URL.createObjectURL(currentMediaBlob);
@@ -783,8 +832,8 @@ function blobToDataURL(blob) {
             }
 
             try {
-                const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
-                const mime = currentMediaType === 'image' ? 'image/png' : 'video/mp4';
+                const ext = currentMediaType === 'image' ? 'jpg' : currentVideoExt;
+                const mime = currentMediaType === 'image' ? 'image/jpeg' : mediaRecorder.mimeType;
                 
                 const file = new File([currentMediaBlob], `booth-trend-${Date.now()}.${ext}`, { type: mime });
 
@@ -824,16 +873,22 @@ function blobToDataURL(blob) {
         startCamera(currentFacingMode);
 
         // --- Visitor Tracking ---
-window.addEventListener('DOMContentLoaded', () => {
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'track_visitor' }), // <-- Triggers the counter
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    })
-    .then(response => response.json())
-    .then(data => console.log('Visitor logged. Total:', data.newCount))
-    .catch(err => console.error("Analytics error:", err));
-});
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'track_visitor' }), 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.newCount) {
+                    console.log('Visitor logged. Total:', data.newCount);
+                } else {
+                    console.log('Visitor logged successfully.');
+                }
+            })
+            .catch(err => console.error("Analytics error:", err));
+        });
     </script>
 </body>
 </html>
