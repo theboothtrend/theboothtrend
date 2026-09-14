@@ -186,6 +186,12 @@
             height: 48px;
         }
 
+        #btn-swap {
+            background: rgba(54, 1, 7, 0.6); /* Translucent dark maroon */
+            border: 1px solid rgba(216, 170, 74, 0.5); /* Subtle gold border */
+            color: #d8aa4a; /* Gold icon */
+        }
+
         /* Main action buttons (Photo / Video) */
         .btn-action {
             width: 68px;
@@ -201,8 +207,9 @@
         }
 
         .btn-action.video {
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid white;
+           background: rgba(54, 1, 7, 0.8); /* Deep maroon */
+            border: 2px solid #d8aa4a; /* Royal gold border */
+            color: #d8aa4a; /* Gold icon */
         }
 
         /* Recording Animation */
@@ -362,7 +369,7 @@
         <!-- Controls -->
         <div id="controls">
             <!-- Swap Camera Button -->
-            <button class="glass-btn btn-small" id="btn-swap" onclick="toggleCamera()" style="visibility: hidden;">
+            <button class="glass-btn btn-small" id="btn-swap" onclick="toggleCamera()">
                 <i data-lucide="switch-camera" style="width: 20px; height: 20px;"></i>
             </button>
 
@@ -372,7 +379,7 @@
             </button>
 
             <!-- Toggle Video Button -->
-            <button class="glass-btn btn-action video" id="btn-video" onclick="toggleVideoRecording()"style="visibility: hidden;">
+            <button class="glass-btn btn-action video" id="btn-video" onclick="toggleVideoRecording()">
                 <i data-lucide="video" style="width: 28px; height: 28px;"></i> 
             </button>
         </div>
