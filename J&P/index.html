@@ -422,7 +422,7 @@ let recordedChunks = [];
 let currentFacingMode = 'user'; 
 let currentStream = null;
 
-// --- RANDOMIZED BRAND FRAME SETUP ---
+// --- SEQUENTIAL BRAND FRAME SETUP ---
 const brandFrame = new Image();
 brandFrame.crossOrigin = "anonymous";
 
@@ -434,8 +434,20 @@ const frameOptions = [
     "assets/frame5.png"
 ];
 
-const randomIndex = Math.floor(Math.random() * frameOptions.length);
-brandFrame.src = frameOptions[randomIndex];
+// Retrieve the last used index from localStorage
+let lastIndex = localStorage.getItem('boothFrameIndex');
+let nextIndex = 0; // Default to the first frame
+
+if (lastIndex !== null) {
+    // Increment the index by 1. The modulo (%) ensures it loops back to 0 after the last frame.
+    nextIndex = (parseInt(lastIndex, 10) + 1) % frameOptions.length;
+}
+
+// Save the new index back to localStorage for the next scan
+localStorage.setItem('boothFrameIndex', nextIndex);
+
+// Assign the sequential frame to the image source
+brandFrame.src = frameOptions[nextIndex];
 
 // --- Camera Setup & Swap Logic ---
 async function startCamera(facingMode) {
