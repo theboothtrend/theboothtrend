@@ -465,24 +465,28 @@
         let currentStream = null;
 
         // --- MULTIPLE FRAMES SETUP ---
-        const frames = [
+        const framePaths = [
             "assets/IBA_01.png",
             "assets/IBA_02.png", 
             "assets/IBA_03.png",
             "assets/IBA_04.png",
             "assets/IBA_05.png"  
         ];
+
         let currentFrameIndex = 0;
 
-        const brandFrame = new Image();
-        brandFrame.crossOrigin = "anonymous";
-        brandFrame.src = frames[currentFrameIndex];
+        // PRELOAD ALL IMAGES INTO MEMORY
+        const preloadedFrames = framePaths.map(path => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = path;
+            return img;
+        });
 
         const frameSelector = document.getElementById('frame-selector');
 
         function selectFrame(index) {
             currentFrameIndex = index;
-            brandFrame.src = frames[currentFrameIndex];
             
             document.querySelectorAll('.frame-btn').forEach((btn, i) => {
                 if (i === index) {
@@ -493,7 +497,7 @@
             });
         }
 
-        frames.forEach((frame, index) => {
+        framePaths.forEach((_, index) => {
             const btn = document.createElement('button');
             btn.className = `frame-btn ${index === 0 ? 'active' : ''}`;
             btn.innerHTML = index + 1; 
@@ -579,8 +583,10 @@
                 canvasCtx.restore(); 
                 
                 drawCropOverlay(w, h);
-                if (brandFrame.complete && brandFrame.naturalHeight !== 0) {
-                    canvasCtx.drawImage(brandFrame, cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
+                
+                const currentBrandFrame = preloadedFrames[currentFrameIndex];
+                if (currentBrandFrame.complete && currentBrandFrame.naturalHeight !== 0) {
+                    canvasCtx.drawImage(currentBrandFrame, cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
                 }
 
                 if (isRecording) {
