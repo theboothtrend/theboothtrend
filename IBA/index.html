@@ -127,7 +127,7 @@
             object-fit: cover; 
         }
         
-        /* Frame Selector Row - PUSHED LOWER */
+        /* Frame Selector Row */
         #frame-selector {
             position: absolute;
             bottom: max(95px, calc(env(safe-area-inset-bottom) + 90px));
@@ -173,7 +173,7 @@
             box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4);
         }
 
-        /* UI Controls Overlay - PUSHED LOWER */
+        /* UI Controls Overlay */
         #controls {
             position: absolute;
             bottom: max(15px, env(safe-area-inset-bottom));
@@ -370,7 +370,7 @@
     <!-- Loading Screen -->
     <div id="loader">
         <div class="spinner"></div>
-        <p>Starting Camera...</p>
+        <p id="loader-text">Setting up booth...</p>
     </div>
 
     <!-- Main Booth -->
@@ -544,9 +544,21 @@
 
             if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
                 
-                if (loader.style.opacity !== '0') {
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.style.display = 'none', 400);
+                // Check if all preloaded frames are successfully downloaded
+                const framesReady = preloadedFrames.every(img => img.complete);
+                
+                if (framesReady) {
+                    // Hide loader only when both camera and frames are ready
+                    if (loader.style.opacity !== '0') {
+                        loader.style.opacity = '0';
+                        setTimeout(() => loader.style.display = 'none', 400);
+                    }
+                } else {
+                    // Optionally update the text while waiting for images
+                    const loaderText = document.getElementById('loader-text');
+                    if (loaderText && loaderText.innerText !== "Loading frames...") {
+                        loaderText.innerText = "Loading frames...";
+                    }
                 }
 
                 if (canvasElement.width !== videoElement.videoWidth || canvasElement.height !== videoElement.videoHeight) {
