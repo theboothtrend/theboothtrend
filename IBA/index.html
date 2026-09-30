@@ -363,6 +363,30 @@
             color: white;
             box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4);
         }
+
+        /* Social Preview Icons */
+        .social-preview-icons {
+            margin-top: 25px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s; 
+        }
+
+        #result-modal.open .social-preview-icons {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .social-icon {
+            width: 40px; /* Adjust size as needed */
+            height: 40px;
+            object-fit: contain;
+            opacity: 0.7; /* Optional: slight transparency so they don't distract from the main buttons */
+        }
     </style>
 </head>
 <body>
@@ -425,6 +449,13 @@
             <button class="action-btn secondary" onclick="downloadMedia()">
                 <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save
             </button>
+        </div>
+
+        <!-- Social Logos -->
+        <div class="social-preview-icons">
+            <img src="assets/tiktok.png" alt="TikTok" class="social-icon">
+            <img src="assets/instapng.png" alt="Instagram" class="social-icon">
+            <img src="assets/fbpng.png" alt="Facebook" class="social-icon">
         </div>
     </div>
 
