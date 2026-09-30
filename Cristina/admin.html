@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRISTINATINA - Staff Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --magenta-dark: #2a0416;
+            --magenta-rich: #520930;
+            --gold-light: #fcf6ba;
+            --gold-main: #d4af37;
+            --gold-dark: #b38728;
+            --text-light: #fdf5e6;
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            text-align: center; 
+            background: linear-gradient(135deg, var(--magenta-dark) 0%, var(--magenta-rich) 50%, var(--magenta-dark) 100%); 
+            color: var(--text-light);
+            padding: 20px; 
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-panel { 
+            width: 100%;
+            max-width: 500px; 
+            background: rgba(20, 2, 10, 0.6); 
+            backdrop-filter: blur(10px);
+            padding: 40px 30px; 
+            border-radius: 20px; 
+            border: 2px solid var(--gold-main); 
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.2); 
+            box-sizing: border-box;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold-light);
+            font-size: 26px;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        .view-all-link {
+            display: block;
+            text-align: right;
+            color: var(--gold-main);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .view-all-link:hover {
+            color: var(--gold-light);
+            text-decoration: underline;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px 15px; 
+            margin: 10px 0 20px 0; 
+            border-radius: 8px; 
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold-dark);
+            color: var(--text-light);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--gold-light);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 25px; 
+            background: transparent; 
+            color: var(--gold-main); 
+            border: 2px solid var(--gold-main); 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .log-btn { 
+            background: linear-gradient(45deg, var(--gold-dark), var(--gold-light), var(--gold-main)); 
+            color: var(--magenta-dark); 
+            border: none;
+            margin-top: 15px;
+        }
+
+        .log-btn:hover {
+            background: linear-gradient(45deg, var(--gold-main), var(--gold-light), var(--gold-dark)); 
+            transform: translateY(-2px);
+        }
+
+        #customerDetails { 
+            display: none; 
+            background: rgba(0, 0, 0, 0.3); 
+            padding: 20px; 
+            border: 1px solid var(--gold-dark); 
+            border-radius: 12px;
+            margin-top: 25px; 
+            text-align: left;
+        }
+
+        #customerDetails h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold-light);
+            margin: 0 0 10px 0;
+            font-size: 22px;
+        }
+
+        #customerDetails p {
+            margin: 5px 0;
+            font-size: 15px;
+            color: #ebd4e0;
+        }
+
+        #cVisits {
+            font-size: 20px !important;
+            font-weight: 700;
+            color: var(--gold-main) !important;
+            margin-top: 15px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-panel">
+        <a href="admin-list.html" class="view-all-link">View All Customers →</a>
+        <h2>Salon Staff Portal</h2>
+        
+        <input type="text" id="searchMobile" placeholder="Enter Customer Mobile Number">
+        <button onclick="searchCustomer()">Search Customer</button>
+
+        <div id="customerDetails">
+            <h3 id="cName">Name: </h3>
+            <p id="cMobile">Mobile: </p>
+            <p id="cVisits">Total Visits: </p>
+            <button class="log-btn" onclick="addStamp()">+ Log Stamp (Add Visit)</button>
+        </div>
+    </div>
+
+    <script>
+        // CRITICAL: Replace with your actual PHP backend URL
+        const API_URL = "https://enzoytours.co.nz/myapi/admin.php";
+        let currentMobile = "";
+
+        async function searchCustomer() {
+            currentMobile = document.getElementById("searchMobile").value;
+            if (!currentMobile) return alert("Please enter a mobile number.");
+
+            const res = await fetch(API_URL, {
+                method: "POST", body: JSON.stringify({ action: "search", mobile: currentMobile })
+            });
+            const data = await res.json();
+            
+            if (data.status === "success") {
+                document.getElementById("customerDetails").style.display = "block";
+                document.getElementById("cName").innerText = "Name: " + data.data.name;
+                document.getElementById("cMobile").innerText = "Mobile: " + data.data.mobile;
+                document.getElementById("cVisits").innerText = "Total Visits: " + data.data.visits;
+            } else {
+                alert("Customer not found!");
+                document.getElementById("customerDetails").style.display = "none";
+            }
+        }
+
+        async function addStamp() {
+            const res = await fetch(API_URL, {
+                method: "POST", body: JSON.stringify({ action: "add_stamp", mobile: currentMobile })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                alert("Stamp added successfully!");
+                searchCustomer(); // Refresh details instantly
+            } else {
+                alert("Error adding stamp.");
+            }
+        }
+    </script>
+</body>
+</html>
