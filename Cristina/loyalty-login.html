@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRISTINATINA - Loyalty Rewards Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --magenta-dark: #2a0416;
+            --magenta-rich: #520930;
+            --gold-light: #fcf6ba;
+            --gold-main: #d4af37;
+            --gold-dark: #b38728;
+            --text-light: #fdf5e6;
+        }
+
+       body { 
+            font-family: 'Montserrat', sans-serif; 
+            text-align: center; 
+            background: linear-gradient(135deg, #2a0416 0%, #520930 50%, #2a0416 100%); 
+            color: #fdf5e6;
+            padding: 20px; 
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* NEW: Back to Camera link */
+        .back-to-cam {
+            display: flex; align-items: center; gap: 8px;
+            color: var(--gold-main);
+            text-decoration: none; font-weight: 600; font-size: 15px;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+        .back-to-cam:hover { color: var(--gold-light); }
+
+        .container { 
+            width: 100%;
+            max-width: 400px; 
+            background: rgba(20, 2, 10, 0.6); 
+            backdrop-filter: blur(10px);
+            padding: 40px 20px; 
+            border-radius: 20px; 
+            border: 2px solid #d4af37; 
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.2); 
+            box-sizing: border-box;
+        }
+
+        .logo-container { margin-bottom: 20px; }
+        .logo-container img { width: 180px; border-radius: 50%; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); border: 2px solid #d4af37; }
+        h3 { font-family: 'Playfair Display', serif; color: #fcf6ba; font-size: 22px; margin-bottom: 20px; letter-spacing: 1px; }
+        p { font-size: 14px; color: #ebd4e0; margin-top: 20px; }
+        a { color: #d4af37; text-decoration: none; font-weight: 600; transition: 0.3s; }
+        a:hover { color: #fcf6ba; text-decoration: underline; }
+        input { 
+            width: 90%; padding: 12px 15px; margin: 10px 0; border-radius: 8px; 
+            background: rgba(255, 255, 255, 0.05); border: 1px solid #b38728; color: #fdf5e6;
+            font-family: 'Montserrat', sans-serif; font-size: 14px; box-sizing: border-box; transition: 0.3s;
+        }
+        input::placeholder { color: rgba(253, 245, 230, 0.5); }
+        input:focus { outline: none; border-color: #fcf6ba; box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); background: rgba(255, 255, 255, 0.1); }
+        button { 
+            width: 90%; padding: 12px; margin: 15px 0 5px 0; border-radius: 25px; 
+            background: linear-gradient(45deg, #b38728, #fcf6ba, #d4af37); color: #2a0416; border: none; cursor: pointer; 
+            font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s ease;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Back Navigation -->
+    <a href="index.html" class="back-to-cam">
+        <i data-lucide="camera"></i> Back to Camera
+    </a>
+
+    <div class="container">
+        <div class="logo-container">
+            <img src="salon-logo.png" alt="CRISTINATINA Logo">
+        </div>
+        
+        <div id="loginSection">
+            <h3>Welcome Back</h3>
+            <input type="text" id="loginMobile" placeholder="Enter Mobile Number">
+            <button onclick="login()">Enter</button>
+            <p>First time visiting? <a href="#" onclick="showRegister()">Register here</a></p>
+        </div>
+
+        <div id="registerSection" class="hidden">
+            <h3>Join Our Rewards</h3>
+            <input type="text" id="regName" placeholder="Full Name">
+            <input type="text" id="regMobile" placeholder="Mobile Number">
+            <button onclick="register()">Register</button>
+            <p>Already a member? <a href="#" onclick="showLogin()">Login here</a></p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Redirect logged-in users directly to customer dashboard
+        if (localStorage.getItem("customer")) {
+            window.location.href = "customer.html";
+        }
+
+        const API_URL = "https://enzoytours.co.nz/myapi/auth.php";
+
+        function showLogin() {
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.remove('hidden');
+        }
+
+        async function login() {
+            const mobile = document.getElementById('loginMobile').value;
+            if (!mobile) return alert("Please enter your mobile number.");
+            
+            const res = await fetch(API_URL, {
+                method: "POST", body: JSON.stringify({ action: "login", mobile: mobile })
+            });
+            const data = await res.json();
+            
+            if (data.status === "success") {
+                localStorage.setItem("customer", JSON.stringify({mobile: mobile, name: data.name, visits: data.visits}));
+                window.location.href = "customer.html";
+            } else {
+                alert("This mobile number is not registered yet. Please register.");
+                document.getElementById('regMobile').value = mobile; 
+                showRegister(); 
+            }
+        }
+
+        async function register() {
+            const name = document.getElementById('regName').value;
+            const mobile = document.getElementById('regMobile').value;
+            
+            if (!name || !mobile) return alert("Please fill in all fields.");
+
+            const res = await fetch(API_URL, {
+                method: "POST", body: JSON.stringify({ action: "register", name: name, mobile: mobile })
+            });
+            const data = await res.json();
+            
+            if (data.status === "success") {
+                localStorage.setItem("customer", JSON.stringify({mobile: mobile, name: name, visits: 0}));
+                window.location.href = "customer.html";
+            } else {
+                alert("This mobile number is already registered. Please log in instead.");
+                document.getElementById('loginMobile').value = mobile; 
+                showLogin(); 
+            }
+        }
+    </script>
+</body>
+</html>

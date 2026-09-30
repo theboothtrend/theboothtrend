@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRISTINATINA - Loyalty Rewards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --magenta-dark: #2a0416;
+            --magenta-rich: #520930;
+            --gold-light: #fcf6ba;
+            --gold-main: #d4af37;
+            --gold-dark: #b38728;
+            --text-light: #fdf5e6;
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            text-align: center; 
+            background: linear-gradient(135deg, var(--magenta-dark) 0%, var(--magenta-rich) 50%, var(--magenta-dark) 100%); 
+            color: var(--text-light);
+            padding: 20px; 
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container { 
+            width: 100%;
+            max-width: 420px; 
+            background: rgba(20, 2, 10, 0.6); 
+            backdrop-filter: blur(10px);
+            padding: 30px 20px; 
+            border-radius: 20px; 
+            border: 2px solid var(--gold-main); 
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.2); 
+            position: relative;
+        }
+
+        /* NEW: Back to Camera inside the dashboard */
+        .cam-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--gold-main);
+            border: 1px solid var(--gold-main);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        .cam-btn:hover { background: var(--gold-main); color: var(--magenta-dark); }
+
+        .logo-container { margin-bottom: 15px; }
+        .logo-container img { width: 180px; border-radius: 50%; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); border: 2px solid var(--gold-main); }
+        h2 { font-family: 'Playfair Display', serif; color: var(--gold-light); font-size: 26px; margin: 10px 0 5px 0; letter-spacing: 1px; }
+        .tagline { font-family: 'Playfair Display', serif; font-style: italic; color: var(--gold-main); font-size: 14px; margin-bottom: 25px; }
+        .promo-text { font-size: 14px; font-weight: 300; letter-spacing: 0.5px; margin-bottom: 20px; color: #ebd4e0; }
+        
+        .stamps-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 25px 0; }
+        .stamp { width: 55px; height: 55px; border-radius: 50%; border: 2px dashed var(--gold-dark); display: flex; align-items: center; justify-content: center; color: rgba(212, 175, 55, 0.5); font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; background: rgba(0,0,0,0.3); transition: all 0.4s ease; }
+        .stamp.filled { background: linear-gradient(45deg, var(--gold-dark), var(--gold-light), var(--gold-main)); border: 2px solid var(--gold-light); color: var(--magenta-dark); box-shadow: 0 0 15px rgba(212, 175, 55, 0.6); border-style: solid; }
+        .stamp.free-stamp { border-color: var(--gold-main); color: var(--gold-main); font-size: 14px; letter-spacing: 1px; }
+        #free-msg { font-family: 'Playfair Display', serif; color: var(--gold-light); font-size: 20px; text-shadow: 0 0 10px rgba(212, 175, 55, 0.8); margin: 20px 0; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        hr { border: 0; height: 1px; background: linear-gradient(to right, transparent, var(--gold-main), transparent); margin: 30px 0; }
+        h3 { font-family: 'Playfair Display', serif; color: var(--gold-main); font-size: 18px; margin-bottom: 15px; }
+        
+        .social-links { display: flex; flex-direction: column; gap: 12px; }
+        .social-links a { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; text-decoration: none; color: var(--text-light); border-radius: 8px; font-weight: 600; font-size: 14px; letter-spacing: 0.5px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .social-links a i { font-size: 18px; }
+        .ig { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+        .fb { background: #3b5998; }
+        .google { background: #ea4335; }
+        .social-links a:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); border-color: var(--gold-main); }
+        
+        .logout-btn { background: transparent; color: var(--gold-main); border: 1px solid var(--gold-main); padding: 10px 20px; border-radius: 25px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 25px; transition: 0.3s; }
+        .logout-btn:hover { background: var(--danger, #e74c3c); color: white; border-color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <!-- Back to Camera Link -->
+    <a href="index.html" class="cam-btn">
+        <i class="fas fa-camera"></i> Open Photo Booth
+    </a>
+
+    <div class="container">
+        <div class="logo-container">
+            <img src="salon-logo.png" alt="CRISTINATINA Logo">
+        </div>
+        
+        <h2 id="greeting">Welcome!</h2>
+        <div class="tagline">Look Good Feel Confident Stay Beautiful</div>
+        
+        <p class="promo-text">Visit 9 times, your <strong>10th visit is FREE!</strong></p>
+        
+        <div class="stamps-container" id="stamps"></div>
+        <h3 id="free-msg" style="display: none;">✨ Your next service is FREE! ✨</h3>
+        <hr>
+        
+        <h3>Connect with us</h3>
+        <div class="social-links">
+            <a href="https://www.instagram.com/cristinatina7579?stkn=MWticzBwazNhZW04aQ==" class="ig" target="_blank">
+                <i class="fab fa-instagram"></i> Follow on Instagram
+            </a>
+            <a href="https://www.facebook.com/share/1BEKkzEcna/?mibextid=wwXIfr" class="fb" target="_blank">
+                <i class="fab fa-facebook-f"></i> Like us on Facebook
+            </a>
+            <a href="https://share.google/SFPQbdp4JTsrtiul2" class="google" target="_blank">
+                <i class="fab fa-google"></i> Leave a Google Review
+            </a>
+        </div>
+        
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        const API_URL = "https://enzoytours.co.nz/myapi/auth.php";
+        
+        let customer = JSON.parse(localStorage.getItem("customer"));
+        if (!customer) window.location.href = "loyalty-login.html";
+
+        const stampsDiv = document.getElementById("stamps");
+        const freeMsg = document.getElementById("free-msg");
+
+        function renderStamps() {
+            document.getElementById("greeting").innerText = `Hi, ${customer.name}!`;
+            stampsDiv.innerHTML = ""; 
+            let visitsInCurrentCycle = customer.visits % 10;
+            
+            for (let i = 1; i <= 10; i++) {
+                let div = document.createElement("div");
+                div.classList.add("stamp");
+                
+                if (i <= visitsInCurrentCycle) {
+                    div.classList.add("filled");
+                    div.innerHTML = "<i class='fas fa-check'></i>";
+                } else if (i === 10) {
+                    div.classList.add("free-stamp");
+                    div.innerHTML = "FREE";
+                } else {
+                    div.innerHTML = i;
+                }
+                stampsDiv.appendChild(div);
+            }
+
+            if (visitsInCurrentCycle === 9) { freeMsg.style.display = "block"; } 
+            else { freeMsg.style.display = "none"; }
+        }
+
+        async function fetchLatestVisits() {
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST", body: JSON.stringify({ action: "login", mobile: customer.mobile })
+                });
+                const data = await res.json();
+                
+                if (data.status === "success") {
+                    if (data.visits !== customer.visits) {
+                        customer.visits = data.visits;
+                        localStorage.setItem("customer", JSON.stringify(customer));
+                        renderStamps(); 
+                    }
+                }
+            } catch (error) { console.log("Waiting for network connection..."); }
+        }
+
+        function logout() {
+            localStorage.removeItem("customer");
+            window.location.href = "index.html";
+        }
+
+        renderStamps(); 
+        setInterval(fetchLatestVisits, 3000); 
+    </script>
+</body>
+</html>
