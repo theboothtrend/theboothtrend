@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Bengal By Hands</title>
     
-    <!-- Website Icon -->
-    <!-- <link rel="icon" type="image/png" href="./assets/logo_blue_1.png"> -->
-    
-    <!-- Icons -->
+    <!-- Icons & 5 Google Fonts -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@700&family=Montserrat:wght@700&family=Special+Elite&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -74,7 +72,7 @@
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Top Bar Container */
+        /* Top Bar */
         .top-bar {
             position: absolute;
             top: 0;
@@ -87,7 +85,6 @@
             pointer-events: none;
         }
 
-        /* Glass Back Button */
         #back-button {
             width: 44px;
             height: 44px;
@@ -123,14 +120,9 @@
             padding-bottom: 0; 
         }
         #input-video { display: none; }
+        #output-canvas { width: 100%; height: 100%; object-fit: cover; }
 
-        #output-canvas {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; 
-        }
-
-        /* UI Controls Overlay */
+        /* Controls Overlay */
         #controls {
             position: absolute;
             bottom: max(30px, env(safe-area-inset-bottom));
@@ -150,7 +142,6 @@
             #booth-container { padding-bottom: 140px; }
         }
 
-        /* Base floating button style */
         .glass-btn {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -166,21 +157,9 @@
             color: white;
         }
 
-        .glass-btn:active {
-            transform: scale(0.92);
-        }
-
-        /* Secondary actions (Swap) */
-        .btn-small {
-            width: 48px;
-            height: 48px;
-        }
-
-        /* Main action buttons (Photo / Video) */
-        .btn-action {
-            width: 68px;
-            height: 68px;
-        }
+        .glass-btn:active { transform: scale(0.92); }
+        .btn-small { width: 48px; height: 48px; }
+        .btn-action { width: 68px; height: 68px; }
 
         .btn-action.photo {
             background: rgba(255, 255, 255, 0.9);
@@ -194,17 +173,13 @@
             border: 2px solid white;
         }
 
-        /* Recording Animation */
         .recording {
             background: var(--danger) !important;
             border-color: rgba(255, 59, 48, 0.4) !important;
             animation: pulse 2s infinite;
         }
         
-        .recording i { 
-            color: white !important; 
-            fill: white !important; 
-        }
+        .recording i { color: white !important; fill: white !important; }
 
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
@@ -212,7 +187,6 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
         }
 
-        /* Countdown Overlay */
         #countdown {
             position: absolute;
             top: 50%;
@@ -227,7 +201,6 @@
             pointer-events: none;
         }
 
-        /* Flash Animation */
         #flash {
             position: fixed;
             top: 0;
@@ -241,7 +214,7 @@
             transition: opacity 0.1s ease-out;
         }
 
-        /* Result Modal */
+        /* Safe Flex Layout for Result Modal */
         #result-modal {
             position: fixed;
             top: 0;
@@ -254,73 +227,241 @@
             z-index: 200;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            justify-content: space-between; /* Keeps image high, buttons low */
+            padding: max(15px, env(safe-area-inset-top)) 15px max(20px, env(safe-area-inset-bottom));
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
-            padding: 20px;
+            touch-action: none;
         }
 
-        #result-modal.open { 
-            opacity: 1; 
-            visibility: visible; 
+        #result-modal.open { opacity: 1; visibility: visible; }
+
+        /* Preview Container */
+        .media-preview-container {
+            position: relative;
+            flex: 1; /* Takes up all available space above the menu */
+            width: 100%;
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            min-height: 0; /* Critical for flex shrinking */
+            margin-bottom: 15px;
+            transform: translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            touch-action: none; 
         }
+
+        #result-modal.open .media-preview-container { transform: translateY(0); }
 
         .result-media {
             max-width: 100%;
-            max-height: 65vh;
-            border-radius: 16px;
+            max-height: 100%;
+            border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             object-fit: contain;
-            display: none;
-            transform: translateY(20px);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
         }
 
-        #result-modal.open .result-media {
-            transform: translateY(0);
+        /* Instagram-style Text Overlay */
+        .text-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
+            width: max-content;
+            max-width: 90%;
+            text-align: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(24px, 8vw, 42px);
+            color: #ffffff; 
+            line-height: 1.1;
+            padding: 15px; 
+            text-shadow: 
+                -1px -1px 0 rgba(0,0,0,0.5),  
+                 1px -1px 0 rgba(0,0,0,0.5),
+                -1px  1px 0 rgba(0,0,0,0.5),
+                 1px  1px 0 rgba(0,0,0,0.5),
+                 0px  4px 10px rgba(0,0,0,0.8);
+            transform-origin: center center;
+            will-change: transform;
         }
+
+        /* Drag-to-Trash Zone */
+        #delete-zone {
+            position: absolute;
+            bottom: 240px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            width: 60px; 
+            height: 60px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            color: white;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s, border-color 0.2s;
+            z-index: 300;
+            pointer-events: none;
+        }
+
+        #delete-zone.visible { transform: translateX(-50%) scale(1); }
+        #delete-zone.danger {
+            background: var(--danger);
+            border-color: var(--danger);
+            transform: translateX(-50%) scale(1.15);
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.5);
+        }
+
+        /* Bottom Panel Wrapper (Not Absolute anymore, uses Flex Flow) */
+        #bottom-panel-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 150;
+        }
+
+        /* Tabbed Editing Panel */
+        #edit-panel {
+            width: 100%;
+            max-width: 400px;
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .edit-tabs {
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+            margin-bottom: 5px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .tab-btn.active { color: white; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: flex; flex-direction: column; gap: 10px; }
+
+        .styled-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-family: -apple-system, sans-serif;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            transition: border 0.3s;
+        }
+        .styled-input:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.15); }
+
+        .scroll-row {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 5px;
+            scrollbar-width: none; 
+        }
+        .scroll-row::-webkit-scrollbar { display: none; }
+
+        .font-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .font-btn.active { background: white; color: black; }
+
+        .color-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .color-swatch.active { border: 3px solid white; transform: scale(1.15); }
+        .rainbow-swatch { background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); border: 2px solid rgba(255,255,255,0.4); }
+
+        #advanced-colors {
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 10px;
+        }
+        .slider-group { display: flex; flex-direction: column; gap: 4px; }
+        .slider-group label { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        .hsl-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none; background: #fff; }
+        .hsl-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: white; border: 2px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        
+        #hue-slider { background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); }
+        #sat-slider { background: linear-gradient(to right, gray, red); }
+        #light-slider { background: linear-gradient(to right, black, red, white); }
 
         /* Modal Actions */
         .modal-actions {
-            margin-top: 25px;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
 
         .action-btn {
             background: white;
             color: black;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border-radius: 30px;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             -webkit-tap-highlight-color: transparent;
             transition: transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        .action-btn:active {
-            transform: scale(0.95);
-        }
-
-        .action-btn.secondary {
-            background: rgba(255,255,255,0.2);
-            color: white;
-        }
-
-        .action-btn.highlight {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4);
-        }
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn.secondary { background: rgba(255,255,255,0.15); color: white; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .action-btn.highlight { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4); }
     </style>
 </head>
 <body>
@@ -333,9 +474,7 @@
 
     <!-- Main Booth -->
     <div id="booth-container">
-        
         <div class="top-bar">
-            <!-- Back Button -->
             <a href="index.html" id="back-button">
                 <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
             </a>
@@ -348,17 +487,12 @@
 
         <!-- Controls -->
         <div id="controls">
-            <!-- Swap Camera Button -->
             <button class="glass-btn btn-small" id="btn-swap" onclick="toggleCamera()">
                 <i data-lucide="switch-camera" style="width: 20px; height: 20px;"></i>
             </button>
-
-            <!-- Capture Photo Button -->
             <button class="glass-btn btn-action photo" id="btn-capture" onclick="startPhotoCountdown()">
                 <i data-lucide="camera" style="width: 28px; height: 28px;"></i>
             </button>
-
-            <!-- Toggle Video Button -->
             <button class="glass-btn btn-action video" id="btn-video" onclick="toggleVideoRecording()">
                 <i data-lucide="video" style="width: 28px; height: 28px;"></i>
             </button>
@@ -367,116 +501,382 @@
 
     <!-- Result Modal -->
     <div id="result-modal">
-        <img id="result-img" class="result-media" src="" alt="Captured Photo">
-        <video id="result-video" class="result-media" controls autoplay loop playsinline></video>
         
-        <div class="modal-actions">
-            <button class="action-btn secondary" onclick="closeModal()">
-                <i data-lucide="trash-2" style="width: 20px; height: 20px;"></i> Discard
-            </button>
-            <button class="action-btn highlight" id="btn-share" onclick="shareMedia()">
-                <i data-lucide="share-2" style="width: 20px; height: 20px;"></i> Share
-            </button>
-            <button class="action-btn secondary" onclick="downloadMedia()">
-                <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save
-            </button>
+        <!-- Image Preview Wrapper (Touch Target for Gestures) -->
+        <div id="image-preview-wrapper" class="media-preview-container">
+            <img id="result-img" class="result-media" src="" alt="Captured Photo">
+            <div id="live-text-overlay" class="text-overlay"></div>
+        </div>
+        
+        <!-- Video Preview Wrapper -->
+        <div id="video-preview-wrapper" class="media-preview-container">
+            <video id="result-video" class="result-media" controls autoplay loop playsinline></video>
+        </div>
+
+        <!-- Drag to Trash Icon -->
+        <div id="delete-zone">
+            <i data-lucide="trash-2" style="width: 24px; height: 24px;"></i>
+        </div>
+
+        <!-- Stable Bottom Area -->
+        <div id="bottom-panel-wrapper">
+            <!-- Tabbed Edit Panel -->
+            <div id="edit-panel">
+                <div class="edit-tabs">
+                    <!-- Added distinct IDs for safe tab switching -->
+                    <button id="btn-tab-keyboard" class="tab-btn active" onclick="switchTab('keyboard')"><i data-lucide="keyboard" style="width:16px;"></i> Text</button>
+                    <button id="btn-tab-font" class="tab-btn" onclick="switchTab('font')"><i data-lucide="type" style="width:16px;"></i> Font</button>
+                    <button id="btn-tab-color" class="tab-btn" onclick="switchTab('color')"><i data-lucide="palette" style="width:16px;"></i> Color</button>
+                </div>
+
+                <!-- Text Tab -->
+                <div id="tab-keyboard" class="tab-content active">
+                    <input type="text" id="user-text-input" class="styled-input" placeholder="Type a review..." maxlength="60" autocomplete="off">
+                </div>
+
+                <!-- Font Tab -->
+                <div id="tab-font" class="tab-content">
+                    <div class="scroll-row" id="font-selector">
+                        <button class="font-btn active" data-font="'Bebas Neue', sans-serif" style="font-family: 'Bebas Neue', sans-serif;">EDITORIAL</button>
+                        <button class="font-btn" data-font="'Montserrat', sans-serif" style="font-family: 'Montserrat', sans-serif;">MODERN</button>
+                        <button class="font-btn" data-font="'Dancing Script', cursive" style="font-family: 'Dancing Script', cursive; font-size: 18px;">Script</button>
+                        <button class="font-btn" data-font="'Special Elite', monospace" style="font-family: 'Special Elite', monospace;">Typewriter</button>
+                        <button class="font-btn" data-font="'Playfair Display', serif" style="font-family: 'Playfair Display', serif; font-style: italic;">Classic</button>
+                    </div>
+                </div>
+
+                <!-- Color Tab -->
+                <div id="tab-color" class="tab-content">
+                    <div class="scroll-row" id="color-selector">
+                        <div class="color-swatch rainbow-swatch" id="btn-toggle-hsl"></div>
+                        <div class="color-swatch preset-swatch active" data-h="0" data-s="0" data-l="100" style="background: hsl(0, 0%, 100%);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="0" data-s="0" data-l="0" style="background: hsl(0, 0%, 0%); border-color: rgba(255,255,255,0.3);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="217" data-s="91" data-l="60" style="background: hsl(217, 91%, 60%);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="142" data-s="71" data-l="45" style="background: hsl(142, 71%, 45%);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="45" data-s="93" data-l="47" style="background: hsl(45, 93%, 47%);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="25" data-s="95" data-l="53" style="background: hsl(25, 95%, 53%);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="0" data-s="84" data-l="60" style="background: hsl(0, 84%, 60%);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="330" data-s="81" data-l="60" style="background: hsl(330, 81%, 60%);"></div> 
+                        <div class="color-swatch preset-swatch" data-h="270" data-s="91" data-l="65" style="background: hsl(270, 91%, 65%);"></div> 
+                    </div>
+                    <div id="advanced-colors">
+                        <div class="slider-group"><label>Hue</label><input type="range" id="hue-slider" class="hsl-slider" min="0" max="360" value="0"></div>
+                        <div class="slider-group"><label>Saturation</label><input type="range" id="sat-slider" class="hsl-slider" min="0" max="100" value="0"></div>
+                        <div class="slider-group"><label>Brightness</label><input type="range" id="light-slider" class="hsl-slider" min="0" max="100" value="100"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons always visible at the bottom -->
+            <div class="modal-actions">
+                <button class="action-btn secondary" onclick="closeModal()">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i> Discard
+                </button>
+                <button class="action-btn highlight" id="btn-share" onclick="handleAction('share')">
+                    <i data-lucide="share-2" style="width: 18px; height: 18px;"></i> Share
+                </button>
+                <button class="action-btn secondary" onclick="handleAction('download')">
+                    <i data-lucide="download" style="width: 18px; height: 18px;"></i> Save
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Initialize Icons
         lucide.createIcons();
 
-        // DOM Elements
         const videoElement = document.getElementById('input-video');
         const canvasElement = document.getElementById('output-canvas');
         const canvasCtx = canvasElement.getContext('2d');
         const loader = document.getElementById('loader');
         const countdownEl = document.getElementById('countdown');
         const flashEl = document.getElementById('flash');
+        
         const resultModal = document.getElementById('result-modal');
+        const imgWrapper = document.getElementById('image-preview-wrapper');
+        const videoWrapper = document.getElementById('video-preview-wrapper');
         const resultImg = document.getElementById('result-img');
         const resultVideo = document.getElementById('result-video');
+        
+        const textInput = document.getElementById('user-text-input');
+        const textOverlay = document.getElementById('live-text-overlay');
+        const editPanel = document.getElementById('edit-panel');
+        const deleteZone = document.getElementById('delete-zone');
         const btnVideo = document.getElementById('btn-video');
-        const btnShare = document.getElementById('btn-share');
 
-        // Hidden canvas for recording the cropped area
+        const advancedColorsPanel = document.getElementById('advanced-colors');
+        const btnToggleHsl = document.getElementById('btn-toggle-hsl');
+        const hueSlider = document.getElementById('hue-slider');
+        const satSlider = document.getElementById('sat-slider');
+        const lightSlider = document.getElementById('light-slider');
+        const allPresets = document.querySelectorAll('.preset-swatch');
+
         const recordingCanvas = document.createElement('canvas');
         const recordingCtx = recordingCanvas.getContext('2d');
 
-        // --- APP STATE & CONFIGURATION ---
         let isCapturing = false;
         let isRecording = false;
-        let isRendering = true; // Controls the render loop
+        let isRendering = true; 
         let cropInfo = { x: 0, y: 0, w: 0, h: 0 }; 
-        const TARGET_ASPECT = 4 / 5; // Standard Portrait Ratio
+        const TARGET_ASPECT = 4 / 5; 
 
-        // Media Storage
         let currentMediaType = 'image'; 
         let currentMediaBlob = null;
         let currentVideoExt = 'mp4'; 
-
-        // Video Recording Variables
         let mediaRecorder;
         let recordedChunks = [];
         let currentFacingMode = 'user'; 
         let currentStream = null;
 
-        // --- SINGLE BRAND FRAME SETUP ---
+        let textOffsetX = 0, textOffsetY = 0, textRotation = 0, textScale = 1;
+        let textHue = 0, textSat = 0, textLight = 100;
+        let textColor = `hsl(0, 0%, 100%)`; 
+        let textFontFamily = "'Bebas Neue', sans-serif";
+        
+        let isDraggingText = false;
+        let startDragX = 0, startDragY = 0, initialOffsetX = 0, initialOffsetY = 0;
+        let initialPinchDistance = null, initialPinchAngle = null, initialScale = 1, initialRotation = 0;
+
         let frameReady = false; 
         const brandFrame = new Image();
         brandFrame.crossOrigin = "anonymous";
-
-        // Tell the app the frame is ready once it downloads
         brandFrame.onload = () => { frameReady = true; };
-        // Also unblock the loader if the image fails to load, so it doesn't spin forever
-        brandFrame.onerror = () => { 
-            frameReady = true; 
-            console.error("Frame failed to load"); 
-        };
+        brandFrame.onerror = () => { frameReady = true; };
+        brandFrame.src = "assets/BBH.png"; 
 
-        brandFrame.src = "assets/BBH.png"; // Your fixed RC Beauty & Bakes frame
+        // --- Tabs Logic (Fixed Bug here) ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            
+            // Programmatically switching no longer relies on mouse events
+            document.getElementById(`btn-tab-${tabId}`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
 
-        // --- Camera Setup & Swap Logic ---
-        async function startCamera(facingMode) {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+        // --- UI Updates ---
+        function updateTextVisuals() {
+            if(!textInput.value.trim()) {
+                textOverlay.style.display = 'none';
+                return;
             }
+            textOverlay.style.display = 'block';
+            textOverlay.style.transform = `translate(calc(-50% + ${textOffsetX}px), calc(-50% + ${textOffsetY}px)) rotate(${textRotation}deg) scale(${textScale})`;
+            textOverlay.style.color = textColor;
+            textOverlay.style.fontFamily = textFontFamily;
+            
+            if(textFontFamily.includes('Dancing Script')) {
+                textOverlay.style.fontSize = "clamp(34px, 10vw, 56px)";
+            } else {
+                textOverlay.style.fontSize = "clamp(24px, 8vw, 42px)";
+            }
+        }
 
+        textInput.addEventListener('input', (e) => {
+            textOverlay.innerHTML = e.target.value.replace(/\n/g, '<br>');
+            updateTextVisuals();
+        });
+
+        document.querySelectorAll('.font-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                textFontFamily = btn.getAttribute('data-font');
+                updateTextVisuals();
+            });
+        });
+
+        // --- Color Logic ---
+        function applyHSLColor() {
+            textColor = `hsl(${textHue}, ${textSat}%, ${textLight}%)`;
+            updateTextVisuals();
+            satSlider.style.background = `linear-gradient(to right, hsl(${textHue}, 0%, ${textLight}%), hsl(${textHue}, 100%, ${textLight}%))`;
+            lightSlider.style.background = `linear-gradient(to right, #000000, hsl(${textHue}, ${textSat}%, 50%), #FFFFFF)`;
+        }
+
+        allPresets.forEach(swatch => {
+            swatch.addEventListener('click', (e) => {
+                btnToggleHsl.classList.remove('active');
+                allPresets.forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+                textHue = swatch.getAttribute('data-h');
+                textSat = swatch.getAttribute('data-s');
+                textLight = swatch.getAttribute('data-l');
+                hueSlider.value = textHue; satSlider.value = textSat; lightSlider.value = textLight;
+                applyHSLColor();
+            });
+        });
+
+        btnToggleHsl.addEventListener('click', () => {
+            allPresets.forEach(s => s.classList.remove('active'));
+            btnToggleHsl.classList.add('active');
+            if(advancedColorsPanel.style.display === 'flex') {
+                advancedColorsPanel.style.display = 'none';
+                btnToggleHsl.classList.remove('active');
+                allPresets[0].classList.add('active'); 
+            } else {
+                advancedColorsPanel.style.display = 'flex';
+                applyHSLColor(); 
+            }
+        });
+
+        [hueSlider, satSlider, lightSlider].forEach(slider => {
+            slider.addEventListener('input', () => {
+                allPresets.forEach(s => s.classList.remove('active'));
+                btnToggleHsl.classList.add('active');
+                textHue = hueSlider.value; textSat = satSlider.value; textLight = lightSlider.value;
+                applyHSLColor();
+            });
+        });
+
+        // --- Drag to Trash Check ---
+        function checkTrashCollision(clientX, clientY) {
+            const rect = deleteZone.getBoundingClientRect();
+            const padding = 20; 
+            if (clientX > rect.left - padding && clientX < rect.right + padding &&
+                clientY > rect.top - padding && clientY < rect.bottom + padding) {
+                deleteZone.classList.add('danger');
+                return true;
+            } else {
+                deleteZone.classList.remove('danger');
+                return false;
+            }
+        }
+
+        // --- Gestures ---
+        imgWrapper.addEventListener('touchstart', (e) => {
+            if (!textOverlay.textContent.trim()) return;
+            if (e.touches.length === 1) {
+                if (e.target === textOverlay) {
+                    isDraggingText = true;
+                    startDragX = e.touches[0].clientX;
+                    startDragY = e.touches[0].clientY;
+                    initialOffsetX = textOffsetX;
+                    initialOffsetY = textOffsetY;
+                    
+                    deleteZone.classList.add('visible');
+                    editPanel.style.opacity = '0'; 
+                }
+            } else if (e.touches.length === 2) {
+                isDraggingText = false; 
+                deleteZone.classList.remove('visible');
+                
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialPinchDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+                initialPinchAngle = Math.atan2(touch2.clientY - touch1.clientY, touch2.clientX - touch1.clientX) * (180 / Math.PI);
+                initialScale = textScale;
+                initialRotation = textRotation;
+            }
+        }, { passive: false });
+
+        imgWrapper.addEventListener('touchmove', (e) => {
+            if (!textOverlay.textContent.trim()) return;
+
+            if (e.touches.length === 1 && isDraggingText) {
+                e.preventDefault(); 
+                const dx = e.touches[0].clientX - startDragX;
+                const dy = e.touches[0].clientY - startDragY;
+                textOffsetX = initialOffsetX + dx;
+                textOffsetY = initialOffsetY + dy;
+                updateTextVisuals();
+                
+                checkTrashCollision(e.touches[0].clientX, e.touches[0].clientY);
+                
+            } else if (e.touches.length === 2) {
+                e.preventDefault(); 
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+                const currentAngle = Math.atan2(touch2.clientY - touch1.clientY, touch2.clientX - touch1.clientX) * (180 / Math.PI);
+                
+                if (initialPinchDistance) {
+                    const scaleDelta = currentDistance / initialPinchDistance;
+                    textScale = Math.max(0.3, Math.min(initialScale * scaleDelta, 4)); 
+                }
+                if (initialPinchAngle !== null) {
+                    let angleDelta = currentAngle - initialPinchAngle;
+                    if (angleDelta > 180) angleDelta -= 360;
+                    if (angleDelta < -180) angleDelta += 360;
+                    textRotation = initialRotation + angleDelta;
+                }
+                updateTextVisuals();
+            }
+        }, { passive: false });
+
+        imgWrapper.addEventListener('touchend', (e) => {
+            if (isDraggingText) {
+                if(deleteZone.classList.contains('danger')) {
+                    textInput.value = ''; textOverlay.innerHTML = '';
+                    textOffsetX = 0; textOffsetY = 0; textScale = 1; textRotation = 0;
+                    updateTextVisuals();
+                }
+                deleteZone.classList.remove('visible', 'danger');
+                editPanel.style.opacity = '1';
+            }
+            isDraggingText = false;
+            if (e.touches.length < 2) {
+                initialPinchDistance = null;
+                initialPinchAngle = null;
+            }
+        });
+
+        // Desktop Fallbacks
+        textOverlay.addEventListener('mousedown', (e) => {
+            if (!textOverlay.textContent.trim()) return;
+            isDraggingText = true;
+            startDragX = e.clientX; startDragY = e.clientY;
+            initialOffsetX = textOffsetX; initialOffsetY = textOffsetY;
+            deleteZone.classList.add('visible');
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingText) return;
+            const dx = e.clientX - startDragX;
+            const dy = e.clientY - startDragY;
+            textOffsetX = initialOffsetX + dx; textOffsetY = initialOffsetY + dy;
+            updateTextVisuals();
+            checkTrashCollision(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mouseup', () => { 
+            if(isDraggingText) {
+                if(deleteZone.classList.contains('danger')) {
+                    textInput.value = ''; textOverlay.innerHTML = '';
+                    textOffsetX = 0; textOffsetY = 0; textScale = 1; textRotation = 0;
+                    updateTextVisuals();
+                }
+                deleteZone.classList.remove('visible', 'danger');
+            }
+            isDraggingText = false; 
+        });
+
+        // --- Camera System ---
+        async function startCamera(facingMode) {
+            if (currentStream) currentStream.getTracks().forEach(track => track.stop());
             try {
                 currentStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: facingMode,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
+                    video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
                     audio: true
                 });
-                
                 videoElement.srcObject = currentStream;
                 videoElement.play();
-                
             } catch (err) {
-                console.error("Camera/Mic access error:", err);
-                loader.innerHTML = "<p>Camera/Mic access denied or error.</p>";
+                loader.innerHTML = "<p>Camera access denied.</p>";
             }
         }
 
         function toggleCamera() {
             if (isCapturing || isRecording) return;
             currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            loader.style.display = 'flex';
-            loader.style.opacity = '1';
+            loader.style.display = 'flex'; loader.style.opacity = '1';
             startCamera(currentFacingMode);
         }
 
-        // --- Render Loop ---
         function renderLoop() {
-            if (!isRendering) return; // Pauses processing when modal is open
-
+            if (!isRendering) return; 
             if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-                
-                // ONLY hide the loader if the brand frame has also finished loading
                 if (frameReady && loader.style.opacity !== '0') {
                     loader.style.opacity = '0';
                     setTimeout(() => loader.style.display = 'none', 400);
@@ -487,48 +887,26 @@
                     canvasElement.height = videoElement.videoHeight;
                 }
 
-                const w = canvasElement.width;
-                const h = canvasElement.height;
-                const screenAspect = w / h;
-
+                const w = canvasElement.width, h = canvasElement.height, screenAspect = w / h;
                 if (screenAspect > TARGET_ASPECT) {
-                    cropInfo.h = h;
-                    cropInfo.w = h * TARGET_ASPECT;
-                    cropInfo.x = (w - cropInfo.w) / 2;
-                    cropInfo.y = 0;
+                    cropInfo.h = h; cropInfo.w = h * TARGET_ASPECT; cropInfo.x = (w - cropInfo.w) / 2; cropInfo.y = 0;
                 } else {
-                    cropInfo.w = w;
-                    cropInfo.h = w / TARGET_ASPECT;
-                    cropInfo.x = 0;
-                    cropInfo.y = (h - cropInfo.h) / 2.5; 
+                    cropInfo.w = w; cropInfo.h = w / TARGET_ASPECT; cropInfo.x = 0; cropInfo.y = (h - cropInfo.h) / 2.5; 
                 }
 
-                // Draw Base Background
-                canvasCtx.fillStyle = '#000';
-                canvasCtx.fillRect(0, 0, w, h);
-
-                // Draw Video
+                canvasCtx.fillStyle = '#000'; canvasCtx.fillRect(0, 0, w, h);
                 canvasCtx.save();
-                if (currentFacingMode === 'user') {
-                    canvasCtx.translate(w, 0);
-                    canvasCtx.scale(-1, 1);
-                }
+                if (currentFacingMode === 'user') { canvasCtx.translate(w, 0); canvasCtx.scale(-1, 1); }
                 canvasCtx.drawImage(videoElement, 0, 0, w, h);
                 canvasCtx.restore(); 
                 
-                // Draw crop dimming & frame
                 drawCropOverlay(w, h);
                 if (brandFrame.complete && brandFrame.naturalHeight !== 0) {
                     canvasCtx.drawImage(brandFrame, cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
                 }
 
-                // If recording, copy JUST the cropped section to our hidden recording canvas
                 if (isRecording) {
-                    recordingCtx.drawImage(
-                        canvasElement, 
-                        cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
-                        0, 0, cropInfo.w, cropInfo.h 
-                    );
+                    recordingCtx.drawImage(canvasElement, cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 0, 0, cropInfo.w, cropInfo.h);
                 }
             }
             requestAnimationFrame(renderLoop);
@@ -540,208 +918,169 @@
             if (cropInfo.y + cropInfo.h < h) canvasCtx.fillRect(0, cropInfo.y + cropInfo.h, w, h - (cropInfo.y + cropInfo.h));
             if (cropInfo.x > 0) canvasCtx.fillRect(0, cropInfo.y, cropInfo.x, cropInfo.h);
             if (cropInfo.x + cropInfo.w < w) canvasCtx.fillRect(cropInfo.x + cropInfo.w, cropInfo.y, w - (cropInfo.x + cropInfo.w), cropInfo.h);
-            
             if(!isRecording) {
                 canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                canvasCtx.lineWidth = 1;
-                canvasCtx.strokeRect(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
+                canvasCtx.lineWidth = 1; canvasCtx.strokeRect(cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h);
             }
         }
 
-        // --- Photo Workflow ---
         function startPhotoCountdown() {
             if (isCapturing || isRecording) return;
-            isCapturing = true;
-            
-            let count = 3;
-            countdownEl.style.display = 'block';
-            countdownEl.innerText = count;
-
+            isCapturing = true; let count = 3;
+            countdownEl.style.display = 'block'; countdownEl.innerText = count;
             const timer = setInterval(() => {
                 count--;
-                if (count > 0) {
-                    countdownEl.innerText = count;
-                } else {
-                    clearInterval(timer);
-                    countdownEl.style.display = 'none';
-                    takePhoto();
-                }
+                if (count > 0) { countdownEl.innerText = count; } 
+                else { clearInterval(timer); countdownEl.style.display = 'none'; takePhoto(); }
             }, 1000);
         }
 
         function takePhoto() {
-            flashEl.style.opacity = '1';
-            setTimeout(() => flashEl.style.opacity = '0', 100);
-            
-            try {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = cropInfo.w;
-                tempCanvas.height = cropInfo.h;
-                const tempCtx = tempCanvas.getContext('2d');
+            flashEl.style.opacity = '1'; setTimeout(() => flashEl.style.opacity = '0', 100);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = cropInfo.w; tempCanvas.height = cropInfo.h;
+            tempCanvas.getContext('2d').drawImage(canvasElement, cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 0, 0, cropInfo.w, cropInfo.h);
 
-                tempCtx.drawImage(
-                    canvasElement, 
-                    cropInfo.x, cropInfo.y, cropInfo.w, cropInfo.h, 
-                    0, 0, cropInfo.w, cropInfo.h 
-                );
+            tempCanvas.toBlob((blob) => {
+                currentMediaBlob = blob;
+                
+                // Reset states
+                textOffsetX = 0; textOffsetY = 0; textRotation = 0; textScale = 1;
+                textInput.value = ''; textOverlay.innerHTML = '';
+                textHue = 0; textSat = 0; textLight = 100;
+                hueSlider.value = 0; satSlider.value = 0; lightSlider.value = 100;
+                allPresets.forEach(s => s.classList.remove('active'));
+                allPresets[0].classList.add('active'); 
+                btnToggleHsl.classList.remove('active');
+                advancedColorsPanel.style.display = 'none';
+                
+                // FIXED: Use ID based tab switching rather than relying on events!
+                switchTab('keyboard'); 
+                
+                applyHSLColor();
+                updateTextVisuals();
 
-                tempCanvas.toBlob((blob) => {
-                    currentMediaBlob = blob;
-                    const objectURL = URL.createObjectURL(blob);
-                    
-                    resultImg.src = objectURL;
-                    resultImg.style.display = 'block';
-                    resultVideo.style.display = 'none';
-                    currentMediaType = 'image';
-                    
-                    btnShare.style.display = 'flex';
-                    
-                    isRendering = false; // Pause rendering
-                    resultModal.classList.add('open');
-                    isCapturing = false;
-                }, 'image/png');
-
-            } catch (err) {
-                console.error(err);
-                alert("Capture error.");
-                isCapturing = false;
-            }
+                resultImg.src = URL.createObjectURL(blob);
+                imgWrapper.style.display = 'flex'; videoWrapper.style.display = 'none';
+                editPanel.style.display = 'flex'; currentMediaType = 'image';
+                
+                isRendering = false; resultModal.classList.add('open'); isCapturing = false;
+            }, 'image/png');
         }
 
-        // --- Video Recording Workflow ---
         function toggleVideoRecording() {
             if (isCapturing) return;
-
-            if (isRecording) {
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                }
-                return;
-            }
+            if (isRecording) { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); return; }
             
-            try {
-                recordedChunks = [];
-                
-                recordingCanvas.width = cropInfo.w;
-                recordingCanvas.height = cropInfo.h;
-                
-                const canvasStream = recordingCanvas.captureStream(30); 
-                let tracks = [...canvasStream.getVideoTracks()];
+            recordedChunks = [];
+            recordingCanvas.width = cropInfo.w; recordingCanvas.height = cropInfo.h;
+            const canvasStream = recordingCanvas.captureStream(30); 
+            let tracks = [...canvasStream.getVideoTracks()];
+            if (currentStream && currentStream.getAudioTracks().length > 0) tracks.push(currentStream.getAudioTracks()[0]);
 
-                if (currentStream) {
-                    const audioTracks = currentStream.getAudioTracks();
-                    if (audioTracks.length > 0) tracks.push(audioTracks[0]);
-                }
+            const combinedStream = new MediaStream(tracks);
+            let mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+            
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: mimeType });
+            mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = finishRecording; mediaRecorder.start(); isRecording = true;
 
-                const combinedStream = new MediaStream(tracks);
-
-                let mimeType = 'video/webm';
-                if (MediaRecorder.isTypeSupported('video/mp4')) {
-                    mimeType = 'video/mp4';
-                }
-
-                mediaRecorder = new MediaRecorder(combinedStream, { mimeType: mimeType });
-
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) recordedChunks.push(e.data);
-                };
-
-                mediaRecorder.onstop = finishRecording;
-                mediaRecorder.start();
-                isRecording = true;
-
-                btnVideo.classList.add('recording');
-                btnVideo.innerHTML = '<i data-lucide="square" style="width: 24px; height: 24px; fill: white;"></i>';
-                lucide.createIcons();
-
-            } catch(e) {
-                console.error("Recording failed", e);
-                alert("Video recording is not supported on this browser.");
-            }
+            btnVideo.classList.add('recording');
+            btnVideo.innerHTML = '<i data-lucide="square" style="width: 24px; height: 24px; fill: white;"></i>';
+            lucide.createIcons();
         }
 
         function finishRecording() {
             isRecording = false;
-            
             btnVideo.classList.remove('recording');
             btnVideo.innerHTML = '<i data-lucide="video" style="width: 28px; height: 28px;"></i>';
             lucide.createIcons();
-
             currentMediaBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-            const videoUrl = URL.createObjectURL(currentMediaBlob);
-
-            resultVideo.src = videoUrl;
-            resultVideo.style.display = 'block';
-            resultImg.style.display = 'none';
-            currentMediaType = 'video';
-            currentVideoExt = 'mp4'; 
-
-            btnShare.style.display = 'flex';
             
-            isRendering = false; // Pause rendering
-            resultModal.classList.add('open');
+            resultVideo.src = URL.createObjectURL(currentMediaBlob);
+            videoWrapper.style.display = 'flex'; imgWrapper.style.display = 'none';
+            editPanel.style.display = 'none'; currentMediaType = 'video'; currentVideoExt = 'mp4'; 
+            
+            isRendering = false; resultModal.classList.add('open');
         }
 
-        // --- Download & Share ---
-        function downloadMedia() {
-            const link = document.createElement('a');
-            const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
-            
-            link.download = `rc-beauty-${Date.now()}.${ext}`;
-            link.href = URL.createObjectURL(currentMediaBlob);
-            
-            link.click();
-            closeModal();
-        }
-
-        async function shareMedia() {
-            if (!navigator.share || !navigator.canShare) {
-                alert("Sharing is not supported on this device/browser.");
-                return;
+        // --- Output Generation ---
+        function getLines(ctx, text, maxWidth) {
+            let words = text.split(" "), lines = [], currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+                let word = words[i], width = ctx.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) currentLine += " " + word; else { lines.push(currentLine); currentLine = word; }
             }
+            lines.push(currentLine); return lines;
+        }
 
-            try {
-                const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
-                const mime = currentMediaType === 'image' ? 'image/png' : 'video/mp4';
-                
-                const file = new File([currentMediaBlob], `rc-beauty-${Date.now()}.${ext}`, { type: mime });
+        async function getFinalMediaBlob() {
+            if (currentMediaType === 'video') return currentMediaBlob;
+            const userText = textInput.value.trim();
+            if (!userText) return currentMediaBlob; 
 
-                const shareData = {
-                    title: '',
-                    text: '',
-                    files: [file]
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), img = new Image();
+                img.onload = () => {
+                    canvas.width = img.width; canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    const scale = canvas.width / resultImg.clientWidth;
+                    const canvasOffsetX = textOffsetX * scale, canvasOffsetY = textOffsetY * scale;
+                    let baseSize = Math.floor(canvas.width * 0.1);
+                    if(textFontFamily.includes('Dancing Script')) baseSize = Math.floor(canvas.width * 0.14);
+                    const finalFontSize = baseSize * textScale; 
+                    
+                    ctx.font = `${finalFontSize}px ${textFontFamily}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                    const lines = getLines(ctx, userText, canvas.width * 0.9), lineHeight = finalFontSize * 1.1;
+
+                    ctx.save();
+                    ctx.translate((canvas.width / 2) + canvasOffsetX, (canvas.height / 2) + canvasOffsetY);
+                    ctx.rotate(textRotation * Math.PI / 180);
+
+                    let startY = -((lines.length * lineHeight) / 2) + (lineHeight / 2); 
+                    lines.forEach((line) => {
+                        ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 10; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 4;
+                        ctx.lineWidth = finalFontSize * 0.08; ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineJoin = "round";
+                        ctx.strokeText(line, 0, startY);
+                        ctx.shadowColor = "transparent"; ctx.fillStyle = textColor; ctx.fillText(line, 0, startY);
+                        startY += lineHeight;
+                    });
+                    ctx.restore();
+                    canvas.toBlob(resolve, 'image/png');
                 };
+                img.src = URL.createObjectURL(currentMediaBlob);
+            });
+        }
 
-                if (navigator.canShare(shareData)) {
-                    await navigator.share(shareData);
-                } else {
-                    throw new Error('NotAllowedError'); 
-                }
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.warn('Share blocked:', error);
-                    alert("Direct video sharing is blocked. We are saving it so you can share it straight from your gallery!");
-                    downloadMedia(); 
+        async function handleAction(actionType) {
+            const finalBlob = await getFinalMediaBlob();
+            const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
+            const filename = `bbh-booth-${Date.now()}.${ext}`;
+
+            if (actionType === 'download') {
+                const link = document.createElement('a'); link.download = filename; link.href = URL.createObjectURL(finalBlob); link.click();
+                closeModal();
+            } else if (actionType === 'share') {
+                if (!navigator.share || !navigator.canShare) { alert("Sharing is not supported on this device."); return; }
+                try {
+                    const mime = currentMediaType === 'image' ? 'image/png' : 'video/mp4';
+                    const file = new File([finalBlob], filename, { type: mime });
+                    if (navigator.canShare({ files: [file] })) await navigator.share({ files: [file] });
+                    else throw new Error('NotAllowedError'); 
+                } catch (error) {
+                    if (error.name !== 'AbortError') { alert("Direct sharing blocked. Saving it so you can share from your gallery!"); handleAction('download'); }
                 }
             }
         }
 
         function closeModal() {
             resultModal.classList.remove('open');
-            if (currentMediaType === 'video') {
-                resultVideo.pause();
-                resultVideo.src = ""; 
-            }
-            
-            isRendering = true; // Resume rendering
-            requestAnimationFrame(renderLoop);
+            if (currentMediaType === 'video') { resultVideo.pause(); resultVideo.src = ""; }
+            isRendering = true; requestAnimationFrame(renderLoop);
         }
 
-        // --- Initialization ---
-        videoElement.addEventListener('loadeddata', () => {
-            requestAnimationFrame(renderLoop);
-        });
-
+        videoElement.addEventListener('loadeddata', () => requestAnimationFrame(renderLoop));
         startCamera(currentFacingMode);
     </script>
 </body>
