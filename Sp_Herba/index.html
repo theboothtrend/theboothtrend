@@ -269,7 +269,7 @@
 
         .result-media {
             max-width: 100%;
-            max-height: 65vh;
+            max-height: 60vh;
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             object-fit: contain;
@@ -321,6 +321,45 @@
             color: white;
             box-shadow: 0 4px 15px rgba(162, 89, 255, 0.4);
         }
+
+        /* Social & Review Links in Modal */
+        .modal-social-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .social-btn {
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .social-btn:active {
+            transform: scale(0.95);
+        }
+
+        .google-btn {
+            background: white;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        .insta-btn {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 39, 67, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -370,6 +409,7 @@
         <img id="result-img" class="result-media" src="" alt="Captured Photo">
         <video id="result-video" class="result-media" controls autoplay loop playsinline></video>
         
+        <!-- Primary Media Actions -->
         <div class="modal-actions">
             <button class="action-btn secondary" onclick="closeModal()">
                 <i data-lucide="trash-2" style="width: 20px; height: 20px;"></i> Discard
@@ -380,6 +420,17 @@
             <button class="action-btn secondary" onclick="downloadMedia()">
                 <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save
             </button>
+        </div>
+
+        <!-- Social & Review Links -->
+        <div class="modal-social-actions">
+            <a href="https://g.page/r/CebDeBm9gMuMEAE/review" target="_blank" class="social-btn google-btn">
+                 Review us on Google
+            </a>
+            
+            <a href="https://www.instagram.com/spherbaworld?stkn=MTd2djAzYnNqeHo2dA==" target="_blank" class="social-btn insta-btn">
+               Follow us on Instagram
+            </a>
         </div>
     </div>
 
@@ -435,7 +486,7 @@
             console.error("Frame failed to load"); 
         };
 
-        brandFrame.src = "assets/SP.png"; // Your fixed RC Beauty & Bakes frame
+        brandFrame.src = "assets/SP.png"; // Your fixed brand frame
 
         // --- Camera Setup & Swap Logic ---
         async function startCamera(facingMode) {
@@ -598,6 +649,8 @@
                     
                     isRendering = false; // Pause rendering
                     resultModal.classList.add('open');
+                    // Ensure the new icons load when the modal opens
+                    lucide.createIcons();
                     isCapturing = false;
                 }, 'image/png');
 
@@ -680,6 +733,8 @@
             
             isRendering = false; // Pause rendering
             resultModal.classList.add('open');
+            // Ensure the new icons load when the modal opens
+            lucide.createIcons();
         }
 
         // --- Download & Share ---
@@ -704,7 +759,7 @@
                 const ext = currentMediaType === 'image' ? 'png' : currentVideoExt;
                 const mime = currentMediaType === 'image' ? 'image/png' : 'video/mp4';
                 
-                const file = new File([currentMediaBlob], `rc-beauty-${Date.now()}.${ext}`, { type: mime });
+                const file = new File([currentMediaBlob], `sp-herba-${Date.now()}.${ext}`, { type: mime });
 
                 const shareData = {
                     title: '',
