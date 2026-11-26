@@ -130,13 +130,17 @@
             object-fit: cover; 
         }
 
-        /* Frame Selector Scroll Strip */
+        /* Frame Selector Scroll Strip (Centered) */
         #frame-selector {
             position: absolute;
             bottom: max(115px, calc(env(safe-area-inset-bottom) + 115px));
-            left: 0;
-            width: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: fit-content;
+            max-width: 100%;
             display: flex;
+            justify-content: center;
+            align-items: center;
             gap: 12px;
             padding: 10px 20px;
             overflow-x: auto;
@@ -150,6 +154,12 @@
 
         #frame-selector::-webkit-scrollbar {
             display: none;
+        }
+
+        @media (max-width: 360px) {
+            #frame-selector {
+                justify-content: flex-start;
+            }
         }
 
         .frame-btn {
